@@ -61,7 +61,7 @@ workflow samples_loading {
 
 process bedfile_conversion{
     tag "${sample_id}, ${chr}"
-    publishDir "./results/reads_processing/bedfile_conversion/${sample_id}"
+    publishDir "${params.output}/reads_processing/bedfile_conversion/${sample_id}"
     cache true
     label "small_mem"
 
@@ -79,7 +79,7 @@ process bedfile_conversion{
 
 process reads_mapping_and_filtering {
     tag "${sample_id}, ${chr}, ${bed}, ${exons}"
-    publishDir "./results/reads_processing/mapping_filtering/${sample_id}"
+    publishDir "${params.output}/reads_processing/mapping_filtering/${sample_id}"
     cache true
     label "big_mem"
 
@@ -96,7 +96,7 @@ process reads_mapping_and_filtering {
 
 process ip_splitting {
     tag "${chr}"
-    publishDir "./results/internalp_filtering/ipdb_splitted"
+    publishDir "${params.output}/internalp_filtering/ipdb_splitted"
     cache true
     label "small_mem"
 
@@ -114,7 +114,7 @@ process ip_splitting {
 
 process ip_filtering {
     tag "${sample_id}, ${chr}, ${ipdb}"
-    publishDir "./results/internalp_filtering/internalp_filtered/${sample_id}"
+    publishDir "${params.output}/internalp_filtering/internalp_filtered/${sample_id}"
     cache true
     label "big_mem"
 
