@@ -23,6 +23,11 @@ reads = fread(
   col.names = c("seqnames.rd","start.rd","end.rd","strand.rd","read.id","frag.id"),
   nThread=1)
 
+#-discard inconsistent fragments
+frags_toDel = dplyr::distinct(reads, frag.id) %>% tidyr::separate(frag.id, into = c("bc","umi"), sep="::", remove=F) %>%
+    dplyr::filter(is.na(frag.id))
+reads = dplyr::filter(reads, !frag.id %in% frags_toDel$frag.id)
+
 #exons
 gtf = fread(args$exons, nThread=1)
 
@@ -30,7 +35,6 @@ gtf = fread(args$exons, nThread=1)
 reads$start.rd = reads$start.rd + 1
 
 #Processing of reads
-#------------------
 message("Processing of reads...")
 reads = reads %>%
   dplyr::filter(start.rd>min(gtf$start)-1e5 & end.rd<max(gtf$end)+1e5) %>%
@@ -38,8 +42,6 @@ reads = reads %>%
   dplyr::distinct(seqnames.rd,start.rd,end.rd,strand.rd,frag.id, .keep_all = T)
 
 #Mapping reads into the genome
-#-----------------------------
-message("Mapping reads into the genome...")
 hits = GenomicRanges::findOverlaps(
   GenomicRanges::makeGRangesFromDataFrame(reads, seqnames.field = "seqnames.rd", start.field = "start.rd",
                                           end.field = "end.rd", strand.field = "strand.rd"),
@@ -54,9 +56,6 @@ mapped = cbind(reads[hits@from,], gtf[hits@to,]) %>%
   dplyr::mutate(splice.pos=as.numeric(as.character(splice.pos)))
 
 #Filtering operations
-#--------------------
-message("Filtering operations...")
-
 #a. discard fragments associated to intergenics/intronics reads
 message("a. discard fragments associated to intergenics/intronics reads...")
 reads = mapped %>%
@@ -128,7 +127,6 @@ spliceds = dplyr::filter(spliceds, !(ftrs %in% trs.todel))
 unspliceds = dplyr::filter(unspliceds, !(ftrs %in% trs.todel))
 
 #---- concordance unspliced/spliced fragments
-message("concordance unspliceds/spliceds fragments")
 #(? is there spliced reads of a fragment not associated to the same transcript in spliced/unspliced ?)
 tmp = distinct(spliceds, frag.id, transcript_name, ftrs)
 trs.todel = dplyr::filter(unspliceds, frag.id %in% tmp$frag.id) %>%
@@ -149,7 +147,6 @@ rm(trs.todel)
 gc()
 
 #Calculate relative coordinates
-#------------------------------
 message("Calculate relative coordinates...")
 reads = reads %>%
   dplyr::mutate(start.rdR = ifelse(strand=="+",endR-(end.rd-start),NA),
@@ -157,9 +154,15 @@ reads = reads %>%
          start.rdR = ifelse(strand=="-",endR-(end-start.rd),start.rdR),
          end.rdR = ifelse(strand=="-",endR-(end-end.rd),end.rdR))
 
+
+#-Dump reads distribution distance on transcriptomic space
+tmp = distinct(reads,seqnames.rd,start.rd,end.rd,strand.rd,start,end,startR,endR,start.rdR,end.rdR,gene_name,transcript_name,frag.id,readID) %>%
+    group_by(frag.id) %>%
+    mutate(fg.rdR=min(start.rdR)) %>%
+    ungroup()
+data.table::fwrite(tmp, file="read_distance_distribution_on_transcriptomic_scope.txt", sep="\t", row.names=F)
+
 #Writing
-#-------
-message("writing...")
 reads %>%
   dplyr::select(!c(collapsed,nb.splices,collapsed)) %>%
   dplyr::distinct() %>%

@@ -102,24 +102,11 @@ collapseIsoforms = function(x, distance_transcriptome, distance_ex){
 
 # 1) File opening
 #----------------
-message("File opening...")
-
-message("GTF opening...")
 gtf = fread(GTF_PATH)
+qf = fread(QF_PATH, col.names=c("gene_name","transcript_name", "meanTPM", "bulk_TPMperc"))
 
-message("Bulk quantification file opening...")
-qf = fread(QF_PATH, col.names=c("gene_name","transcript_name", "bulk_TPMperc")) %>% dplyr::filter(transcript_name %in% gtf$transcript_name)
-
-if(nrow(qf)==0){
-
-    warning(paste("Any bulk quantification found for the file ", GTF_PATH))
-
-}else{
-
-    #Formatting table (A)
-    #----------------
-    message("Formatting table...")
-    gtf = gtf %>%
+#Formatting table (A)
+gtf = gtf %>% 
     distinct(seqnames,start,end,width,strand,gene_name,transcript_name) %>%
     arrange(seqnames,start,desc(end)) %>%
     stats::na.omit() %>%
@@ -128,11 +115,8 @@ if(nrow(qf)==0){
     arrange(transcript_name) %>%
     data.table()
 
-
-    #Calculate relative coordinates (B)
-    #------------------------------
-    message("Calculate relative coordinates...")
-    gtf = gtf %>%
+#Calculate relative coordinates (B)
+gtf = gtf %>%
     arrange(transcript_name,exon_number) %>%
     group_by(transcript_name) %>%
     group_modify(~{
@@ -156,39 +140,31 @@ if(nrow(qf)==0){
     distinct(seqnames,start,end,strand,startR,endR,gene_name,transcript_name,exon_number) %>%
     data.table()
 
-
-    #Truncate isoforms within transcriptomic distance threshold
-    #----------------------------------------------------------
-    message("Truncate isoforms within transcriptomic distance threshold...")
-    gtf = gtf %>%
+#Truncate isoforms within transcriptomic distance threshold
+gtf = gtf %>%
     dplyr::filter(startR < DT_THRESHOLD) %>%
     mutate(start = ifelse(strand == "+" & endR>DT_THRESHOLD,end-(DT_THRESHOLD-startR),start),
             end = ifelse(strand== "-" & endR>DT_THRESHOLD,start+(DT_THRESHOLD-startR),end),
             endR = ifelse(endR>DT_THRESHOLD,DT_THRESHOLD-1,endR)) %>%
     arrange(seqnames,start,desc(end),transcript_name)
 
-
-    #Collapse similar isoforms
-    #-------------------------
-    #processing
-    message("Collapse similar isoforms")
-    collapseds.tab = gtf %>%
+#Collapse similar isoforms
+collapseds.tab = gtf %>%
     group_by(gene_name) %>%
     group_modify(~{collapseIsoforms(.x, DT_THRESHOLD, DT_EX_THRESHOLD)}) %>%
     ungroup()
-    gtf = left_join(gtf, collapseds.tab) %>%
+
+gtf = left_join(gtf, collapseds.tab) %>% 
     mutate(collapsed = ifelse(is.na(collapsed),"none",collapsed))
 
-    #writing
-    distinct(gtf, gene_name, transcript_name, collapsed) %>%
+#writing
+distinct(gtf, gene_name, transcript_name, collapsed) %>% 
     dplyr::filter(collapsed!="none") %>%
     distinct() %>%
-    fwrite(file = paste0(gtf$seqnames[1],"_collapsed_isoforms.txt"), sep="\t", col.names = F, row.names = F)
+fwrite(file = paste0(gtf$seqnames[1],"_collapsed_isoforms.txt"), sep="\t", col.names = F, row.names = F)
 
-    #collapsing
-    message("collapsing...")
-    gtf = left_join(gtf, qf) %>%
-    dplyr::filter(!is.na(bulk_TPMperc)) %>%
+#collapsing
+gtf = left_join(gtf, qf) %>% 
     group_by(collapsed) %>%
     dplyr::mutate(check=ifelse(collapsed!="none",max(bulk_TPMperc),bulk_TPMperc),
             end=ifelse(strand=="+" & collapsed!="none" & exon_number==1,max(end),end),
@@ -199,19 +175,16 @@ if(nrow(qf)==0){
     ungroup() %>%
     distinct(seqnames,start,end,startR,endR,strand,gene_name,transcript_name,exon_number,bulk_TPMperc,collapsed)
 
-    #6) Writing
-    message("writing files...")
-    #all exons entries
-    fwrite(gtf, file = args$OUTPUT, sep="\t", nThread=1)
+#6) Writing
+#all exons entries
+fwrite(gtf, file = args$OUTPUT, sep="\t", nThread=1)
 
-    #all genes with unique isoforms
-    gtf_unique = gtf %>% dplyr::select(gene_name,transcript_name) %>%
+#all genes with unique isoforms
+gtf_unique = gtf %>% dplyr::select(gene_name,transcript_name) %>% 
     distinct() %>%
     group_by(gene_name) %>%
     mutate(counts = n()) %>%
     dplyr::filter(counts == 1) %>%
     ungroup()
-    gtf_unique = gtf_unique[,c("gene_name","counts")]
-    fwrite(gtf_unique, file=args$OUTPUT_UNIQUE, sep="\t")
-
-}
+gtf_unique = gtf_unique[,c("gene_name","counts")]
+fwrite(gtf_unique, file=args$OUTPUT_UNIQUE, sep="\t")

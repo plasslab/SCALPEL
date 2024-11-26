@@ -24,13 +24,11 @@ BINS = as.numeric(args$BINS)
 
 
 #1. Files Opening
-#++++++++++++++++
 print("opening...")
 #get list of of unique read file
 reads = fread(args$PATH_OF_UNIQUE_TR, col.names=c("seqnames.rd","start.rd","end.rd","strand.rd","dist_END","frag.id","start","end","gene_name","transcript_name","bulk_TPMperc"), nThread = 1)
 
 #2. Processing
-#+++++++++++++
 print("processing...")
 #- get gene counts
 gene_counts = reads %>%
@@ -53,10 +51,6 @@ read_tab = distinct(reads, dist_END, start.rd, end.rd) %>%
   stats::na.omit() %>%
   data.table()
 colnames(read_tab) = c("transcriptomic_distance", "counts")
-
-#let's plot the reads ends positions and reads
-ggplot(read_tab, aes(transcriptomic_distance, counts)) +
-  geom_line() + geom_area(fill="cornflowerblue") + geom_smooth(span=0.05, color="red")
 
 #let's set interval axis
 part_neg = c(seq(0,read_tab$transcriptomic_distance[1],-BINS),read_tab$transcriptomic_distance[1]) %>% unique() %>% rev()
@@ -84,16 +78,13 @@ interval.tab$counts = interval.tab$counts %>% tidyr::replace_na(0)
 interval.tab$probability_scaled = interval.tab$probs_bin %>% scales::rescale(to = c(0,max(interval.tab$counts)))
 
 #plotting
-print("plotting...")
 ggplot(interval.tab) +
   geom_area(aes(transcriptomic_distance,counts), fill="cornflowerblue", size=0.5) +
   geom_line(aes(transcriptomic_distance,probability_scaled), color="red",size=1) +
   theme_classic() +
-  ggtitle("Fragments distribution on transcriptomic space")
+  ggtitle("Reads distribution on transcriptomic space")
 
 # [Writing]
-#++++++++++
-print("writing...")
 ggsave(args$OUTPUT_PDF, scale = 1, device = "pdf",units = "in", width = 11.69, height = 8.27)
 fwrite(interval.tab[,c('transcriptomic_distance','counts','probs_bin')],
        file = args$OUTPUT_PROB, sep="\t", col.names = F, nThread=1)

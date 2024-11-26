@@ -5,6 +5,17 @@ Loading of SAMPLES data & preprocessing according to the sequencing type
 =====================================================================
 */
 
+/* loading of subworkflows */
+include { read_10Xrepo } from '../subworkflows/loading_10X_files.nf'
+include { bam_splitting } from '../subworkflows/bam_splitting.nf'
+
+//check
+
+/*
+- In Case of processing of 10X based samples with a CellRanger repository -> Proceeding to an extraction of the required sample files
+=====================================================================================================================================
+*/
+
 workflow samples_loading {
     /* Loading of samples */
     take:
@@ -17,91 +28,36 @@ workflow samples_loading {
         if ( "${params.sequencing}" == "chromium" ) {
 
             // extract sampleIDs and associated paths
-            read_10x( samples_paths.map{ it=tuple(it[0], it[3]) }).set{ samples_selects }
+            read_10Xrepo(samples_paths.map{ it=tuple(it[0], it[3]) })
+
+            // formatting
+            read_10Xrepo.out.map{ it = tuple( it[0], file(it[1]), file(it[2]), file(it[4]), file(it[3]) ) }.set{ samples_selects }
 
         } else {
 
             samples_paths.map{ it = tuple( it[0], file(it[3]), file(it[4]), file(it[5]) ) }.set{ samples_selects }
         }
 
-        if ( params.barcodes != null ) {
-
+        if (params.barcodes != null) {
+            /* parse barcodes file */
             ( Channel.fromPath(params.barcodes) | splitCsv(header:false) ).set{ barcodes_paths }
-            (samples_selects.join(barcodes_paths, by:[0])).map{ it = tuple( it[0], it[1], it[2], it[5], it[4] )}.set{ samples_selects }
-            selected_isoforms.flatMap { it = it[0] }.combine(samples_selects).set{ samples }
+            (samples_selects.join(barcodes_paths, by:[0])).set{ samples_selects }
+            selected_isoforms.flatMap { it = it[0] }.combine(samples_selects).set{ samples_selects_tmp }
+            samples_selects_tmp.map{ it = tuple(it[0], it[1], it[2], it[3], it[4], it[5]) }.set{ samples_selects }
 
+        } else {
+            selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], it[3], it[4]) }).set{ samples_selects }
         }
 
-        /* split bam files */
-        bam_splitting( samples )
+        /* processing of input BAM file... */
+        bam_splitting( samples_selects )
 
     emit:
         selected_bams = bam_splitting.out
-        sample_files = samples
+        sample_files = samples_selects
 }
 
 
-
-process read_10x {
-    tag "${sample_id}, ${repo}"
-    cache true
-    label "small_mem"
-
-    input:
-        tuple val(sample_id), path(repo)
-    output:
-        tuple val(sample_id), path("${sample_id}.bam"), path("${sample_id}.bam.bai"), path("${sample_id}.barcodes"), path("${sample_id}.counts.txt")
-    script:
-    """
-        Rscript ${baseDir}/src/read_10X.R ${repo}
-        ln -s ${repo}/outs/possorted_genome_bam.bam ${sample_id}.bam
-        ln -s ${repo}/outs/possorted_genome_bam.bam.bai ${sample_id}.bam.bai
-        zcat ${repo}/outs/filtered_feature_bc_matrix/barcodes.tsv.gz > ${sample_id}.barcodes
-    """
-}
-
-
-process bam_splitting {
-    tag "${sample_id}, ${chr}"
-    publishDir "${params.outputDir}/Runfiles/reads_processing/bam_splitting/${sample_id}"
-    cache true
-    label 'small_mem'
-
-    input: 
-        tuple val(chr), val(sample_id), path(bam), path(bai), val(bc_path), path(dge_matrix)
-    output:
-        tuple val(sample_id), val("${chr}"), path("${chr}.bam")
-    script:
-    if( params.sequencing == "dropseq" )
-        if ( params.barcodes != null )
-            """
-            #Dropseq
-            #Filter reads , Remove duuplicates and split by chromosome
-            samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D XC:${bc_path} --keep-tag "XC,XM" | samtools sort > tmp.bam
-            #Remove all PCR duplicates ...
-            samtools markdup tmp.bam ${chr}.bam -r --barcode-tag XC --barcode-tag XM
-            rm tmp.bam
-            """
-        else
-            """
-            #Filter reads , Remove duuplicates and split by chromosome
-            samtools view --subsample ${params.subsample} -b ${bam} ${chr} --keep-tag "XC,XM" | samtools sort > tmp.bam
-            #Remove all PCR duplicates ...
-            samtools markdup tmp.bam ${chr}.bam -r --barcode-tag XC --barcode-tag XM
-            rm tmp.bam
-            """
-    else if( params.sequencing == "chromium" )
-        """
-        #Chromium_seq
-        #Filter reads , Remove duuplicates and split by chromosome
-        samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D CB:${bc_path} --keep-tag "CB,UB" | samtools sort > tmp.bam
-        #Remove all PCR duplicates ...
-        samtools markdup tmp.bam ${chr}.bam -r --barcode-tag CB --barcode-tag UB
-        rm tmp.bam
-        """
-}
-
-    
 process bedfile_conversion{
     tag "${sample_id}, ${chr}"
     publishDir "${params.outputDir}/Runfiles/reads_processing/bedfile_conversion/${sample_id}"
