@@ -28,9 +28,10 @@ workflow samples_loading {
 
             ( Channel.fromPath(params.barcodes) | splitCsv(header:false) ).set{ barcodes_paths }
             (samples_selects.join(barcodes_paths, by:[0])).map{ it = tuple( it[0], it[1], it[2], it[5], it[4] )}.set{ samples_selects }
-            selected_isoforms.flatMap { it = it[0] }.combine(samples_selects).set{ samples }
 
         }
+        /* Integrate isoforms metadata */
+        selected_isoforms.flatMap { it = it[0] }.combine(samples_selects).set{ samples }
 
         /* split bam files */
         bam_splitting( samples )
