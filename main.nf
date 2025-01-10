@@ -65,7 +65,7 @@ if( params.help != null )
 
     - Params:
         Required:
-        - sequencing type (required): ${params.sequencing}
+        - sequencing type [--sequencing] (required): ${params.sequencing}
 
         Optional:
         - barcodes whitelist [--barcodes] (optional): ${params.barcodes}
@@ -245,13 +245,13 @@ workflow apa_characterization {
 
     main:
         /* seurat objects merging */
-        differential_isoform_usage( seurat_objs.collect() )
+        //differential_isoform_usage( seurat_objs.collect() )
 
         /* Merge the filtered BAM files */
         generation_filtered_bams( bams )
 
-    emit:
-        dius = differential_isoform_usage.out
+    //emit:
+        //dius = differential_isoform_usage.out
 }
 
 

@@ -17,6 +17,7 @@ args = parser$parse_args()
 sample_name = basename(args$repo_path)
 
 #Reading
+print("reading file...")
 s.mat = data.frame(Read10X(paste0(args$repo_path,"/outs/filtered_feature_bc_matrix")))
 
 

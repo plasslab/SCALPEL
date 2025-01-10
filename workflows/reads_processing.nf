@@ -21,7 +21,7 @@ workflow samples_loading {
 
         } else {
 
-            samples_paths.map{ it = tuple( it[0], file(it[3]), file(it[4]), file(it[5]) ) }.set{ samples_selects }
+            samples_paths.map{ it = tuple( it[0], file(it[3]), file(it[4]), null, file(it[5]) ) }.set{ samples_selects }
         }
 
         if ( params.barcodes != null ) {
@@ -46,7 +46,7 @@ workflow samples_loading {
 process read_10x {
     tag "${sample_id}, ${repo}"
     cache true
-    label "small_mem"
+    label "big_mem"
 
     input:
         tuple val(sample_id), path(repo)
@@ -71,7 +71,7 @@ process bam_splitting {
     input: 
         tuple val(chr), val(sample_id), path(bam), path(bai), val(bc_path), path(dge_matrix)
     output:
-        tuple val(sample_id), val("${chr}"), path("${chr}.bam")
+        tuple val(sample_id), val("${chr}"), path("${chr}.bam"), optional: true
     script:
     if( params.sequencing == "dropseq" )
         if ( params.barcodes != null )
@@ -82,6 +82,13 @@ process bam_splitting {
             #Remove all PCR duplicates ...
             samtools markdup tmp.bam ${chr}.bam -r --barcode-tag XC --barcode-tag XM
             rm tmp.bam
+             #check if empty bam file... if yes discard from the analysis
+            samtools view ${chr}.bam | head -1 > check
+            if [ -s check ]; then 
+                echo "ok" 
+            else 
+                rm -f ${chr}.bam
+            fi
             """
         else
             """
@@ -90,6 +97,13 @@ process bam_splitting {
             #Remove all PCR duplicates ...
             samtools markdup tmp.bam ${chr}.bam -r --barcode-tag XC --barcode-tag XM
             rm tmp.bam
+             #check if empty bam file... if yes discard from the analysis
+            samtools view ${chr}.bam | head -1 > check
+            if [ -s check ]; then 
+                echo "ok" 
+            else 
+                rm -f ${chr}.bam
+            fi
             """
     else if( params.sequencing == "chromium" )
         """
@@ -99,6 +113,13 @@ process bam_splitting {
         #Remove all PCR duplicates ...
         samtools markdup tmp.bam ${chr}.bam -r --barcode-tag CB --barcode-tag UB
         rm tmp.bam
+        #check if empty bam file... if yes discard from the analysis
+        samtools view ${chr}.bam | head -1 > check
+        if [ -s check ]; then
+            echo "ok"
+        else
+            rm -f ${chr}.bam
+        fi
         """
 }
 
