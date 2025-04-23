@@ -4,12 +4,12 @@
 
 process probability_distribution {
 	tag "${sample_id}"
-	publishDir "./results/isoform_quantification/fragment_probabilities/${sample_id}", overwrite:'true'
+	publishDir "${params.outputDir}/Runfiles/isoform_quantification/fragment_probabilities/${sample_id}", overwrite:'true'
 	cache true
-        label "big_mem"
+    label "big_mem"
 
 	input:
-	tuple val(sample_id), file(reads)
+        tuple val(sample_id), file(reads)
         val(gene_frac)
         val(binsz)
 
@@ -27,9 +27,9 @@ process probability_distribution {
 
 process fragment_probabilities{
 	tag "${sample_id},${chr}"
-	publishDir "./results/isoform_quantification/fragment_probabilities/${sample_id}", overwrite: true, mode: 'copy'
+	publishDir "${params.outputDir}/Runfiles/isoform_quantification/fragment_probabilities/${sample_id}", overwrite: true, mode: 'copy'
 	cache true
-        label "big_mem"
+    label "big_mem"
 
 	input:
         tuple val(sample_id), val(chr), path(reads), path(probabilities)
@@ -39,8 +39,7 @@ process fragment_probabilities{
 
 	script:
         """
-        #Write cell Files
-	Rscript ${baseDir}/src/fragment_probabilities.R ${reads} ${probabilities} ${chr}_frag.reads
+        Rscript ${baseDir}/src/fragment_probabilities.R ${reads} ${probabilities} ${chr}_frag.reads
         """
 }
 
@@ -48,19 +47,19 @@ process fragment_probabilities{
 
 process cells_splitting{
 	tag "${sample_id}"
-        label "big_mem"
+    label "big_mem"
 	cache true
 	
 	input:
-	tuple val(sample_id), file(reads)
+	    tuple val(sample_id), file(reads)
 
 	output:
-	tuple val(sample_id), path("*.cell")
+	    tuple val(sample_id), path("*.cell")
 	
 	script:
-	"""
-	Rscript ${baseDir}/src/merge_and_writecells.R "."
-	"""
+	    """
+	    Rscript ${baseDir}/src/merge_and_writecells.R "."
+	    """
 }
 
 
@@ -84,7 +83,7 @@ process em_algorithm{
 
 process cells_merging{
 	tag "${sample_id}"
-	publishDir "./results/isoform_quantification/fragment_probabilities/${sample_id}", overwrite: true
+	publishDir "${params.outputDir}/Runfiles/isoform_quantification/fragment_probabilities/${sample_id}", overwrite: true
 	cache true
         label "big_mem"
 
@@ -96,14 +95,16 @@ process cells_merging{
 
 	script:
 	"""
-        cat *.pred >> ${sample_id}_isoforms_quantified.txt
+    cat *.pred >> ${sample_id}_isoforms_quantified.txt
 	"""
 }
 
 
+
+
 process dge_generation{
 	tag "${sample_id}, ${isoforms}, ${raw_dge}"
-	publishDir "./results/final_results/${sample_id}", overwrite: true
+	publishDir "${params.outputDir}/", overwrite: true, mode: 'copy'
 	cache true
         label "big_mem"
 
@@ -122,6 +123,3 @@ process dge_generation{
 	Rscript ${baseDir}/src/APAtoseurat.R ${sample_id}_APADGE.txt ${sample_id} ${sample_id}_seurat.RDS
 	"""
 }
-
-
-

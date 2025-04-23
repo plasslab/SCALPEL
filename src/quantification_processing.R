@@ -1,76 +1,64 @@
+#!/usr/bin/env Rscript
+
+# =============================================================================
+# Script: quantification_processing.R
+# Description: Merges Salmon quantifications and GTF for transcript abundance
+# Inputs:
+#   1. Genome GTF file path
+#   2. Output file path for merged TPM table
+# Outputs:
+#   - Merged quantification table with TPM percentages (to args$output_path)
+#   - Split GTFs per chromosome in the current directory
+# =============================================================================
+
 
 #libs
-suppressWarnings(library(argparse, quietly=T, verbose=F))
-suppressWarnings(library(dplyr, quietly=T, verbose=F))
+suppressWarnings({
+  library(argparse, quietly=T, verbose=F)
+  library(dplyr, quietly=T, verbose=F)
+})
 
-#Argument parser
-parser = ArgumentParser(description='Processing of salmon quantification_file')
-parser$add_argument('genome', type="character", help='path of gtf file')
-parser$add_argument('output_path', type="character", help='output path')
-args = parser$parse_args()
+#- Argument parsing
+parser <- ArgumentParser(description = 'Process Salmon quantifications and GTF')
+parser$add_argument('genome', type = "character", help = 'GTF file path')
+parser$add_argument('output_path', type = "character", help = 'Output path for merged TPM summary')
+args <- parser$parse_args()
 
+#- Opening
+#gtf.file...
+gtf = rtracklayer::import(args$genome)
+gtf = data.frame(gtf[gtf$type=="exon",])
+gtf.attributes = c("seqnames", "start", "end", "width", "strand", "gene_id", "gene_name", "transcript_id", "transcript_name")
+gtf = gtf[, gtf.attributes]
 
-#Opening
+#bulk quantification...
+bulk.files = list.files(path = ".", pattern = "*.sf", full.names = T)
 
-#GTF
-message("GTF opening...")
-gtf = rtracklayer::import(args$genome) %>%
-    data.frame() %>%
-    dplyr::filter(type=="exon")
-
-message("GTF check the expected attributes to be present...")
-if( FALSE %in% c(c("gene_id","transcript_id") %in% colnames(gtf)) ){ stop("Error! The attributes 'gene_id' or 'transcript_id' are expected in your GTF file") }
-
-if( ("gene_name" %in% colnames(gtf)) & ("transcript_name" %in% colnames(gtf)) ) {
-    gtf = gtf %>%
-        dplyr::mutate(gene_name = ifelse(is.na(gene_name), gene_id, gene_name), transcript_name = ifelse(is.na(transcript_name), transcript_id, transcript_name)) %>%
-        dplyr::distinct(seqnames, start, end, width, strand, gene_id, gene_name, transcript_id, transcript_name)
-} else {
-    gtf = gtf %>%
-        dplyr::mutate(gene_name = gene_id, transcript_name = transcript_id) %>%
-        dplyr::distinct(seqnames, start, end, width, strand, gene_id, gene_name, transcript_id, transcript_name)
-}
-
-
-#SAMPLES QUANTIFICATION
-message("Processing bulk quantification sample files...")
-lapply(list.files(path = ".", pattern = "*.sf", full.names = T), function(x){
+#- Processing bulk quantification sample files... and write merge_quant file
+RECEPT = lapply(bulk.files, function(x){
     #reading bulk counts
     curr = data.table::fread(x, nThread=1)
-    curr$sample = x
+    curr$sample = basename(x)
     return(curr)
 }) %>% data.table::rbindlist() %>%
+    #avoiding division by zero
+    dplyr::mutate(TPM = TPM + 1) %>%
     #get MeanTPM & discard null transcrips in bulk
     dplyr::group_by(Name) %>%
-    dplyr::summarise(meanTPM = mean(TPM)) %>%
-    dplyr::filter(meanTPM!=0) %>%
+    dplyr::reframe(meanTPM = mean(TPM)) %>%
+    # dplyr::filter(meanTPM!=0) %>%
     dplyr::rename(transcript_id="Name") %>%
     #include gene metadata
-    left_join(distinct(gtf, gene_name, transcript_name, transcript_id)) %>%
+    dplyr::left_join(distinct(gtf, gene_name, transcript_name, transcript_id), by="transcript_id") %>%
+    #only considers all the transcript in the annotation GTF...
+    na.omit() %>%
     #calculate Transcripts bulk % in gene
     dplyr::group_by(gene_name) %>%
     dplyr::reframe(transcript_name, bulk_TPMperc = meanTPM / sum(meanTPM)) %>%
-    arrange(gene_name,transcript_name) %>%
+    dplyr::arrange(gene_name,transcript_name) %>%
+    data.table::data.table() %>%
+    #write bulk quantification file
     data.table::fwrite(file=args$output_path, nThread=1, row.names=F, sep="\t")
 
-#SPLIT GTF by chromosomes
-message("GTF splitting...")
-lapply(split(gtf, gtf$seqnames), function(x){
-    #in case of GTF file from Ensembl
-
-    # a. rename columns
-    lookup = c(gene_type = "gene_biotype", transcript_type = "transcript_biotype")
-    if("gene_biotype" %in% colnames(x)){
-        rename(x, all_of(lookup))
-    }
-
-    # b. check gene version
-    if("gene_version" %in% colnames(x)){
-        x$gene_id = paste0(x$gene_id, ".", x$gene_version)
-        x$transcript_id = paste0(x$transcript_id, ".", x$transcript_version)
-    }
-
-    #writing
-    x = distinct(x, seqnames,start,end,width,strand,gene_name,transcript_name)
-    data.table::fwrite(x, file = paste0(x$seqnames[1],".gtf"), sep="\t", nThread=1)
-}) -> writeds
+#- Write GTF by chromosomes...
+data.table::fwrite(gtf, file = "reduced_annotation.tsv", sep="\t", nThread=1, row.names=F, col.names=F)

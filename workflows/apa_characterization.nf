@@ -7,7 +7,7 @@
 
 process differential_isoform_usage{
 	tag "${objs}"
-	publishDir "./results/final_results/", overwrite: true, mode: 'copy'
+	publishDir "${params.outputDir}/", overwrite: true, mode: 'copy'
         label 'big_mem'
 
 	input:
@@ -33,18 +33,20 @@ process differential_isoform_usage{
 
 process generation_filtered_bams{
     tag "${sampleID}"
-    publishDir "./results/final_results/", overwrite: true, mode: 'copy'
+    publishDir "${params.outputDir}/", overwrite: true, mode: 'copy'
     label 'big_mem'
-
 
     input:
         tuple val(sampleID), file(bams)
-
+        tuple val(sampleID), file(rids)
     output:
-        file("filtered.BAM")
-
+        file("${sampleID}_filtered.bam*")
     script:
         """
-	samtools merge -o filtered.BAM ${bams} -@ ${task.cpus}
+        cat *.readid > ALL_RIDS.txt
+	    samtools merge -o tmp.bam ${bams} -@ ${task.cpus}
+        samtools view -b -N ALL_RIDS.txt tmp.bam > ${sampleID}_filtered.bam 
+        samtools index ${sampleID}_filtered.bam
+        rm tmp.bam
         """
 }

@@ -19,6 +19,7 @@ args = parser$parse_args()
 
 THR_ABUND = 0.10
 THR_PVAL = 0.05
+THR_VAR = 0.05
 
 
 #get RDS files

@@ -5,15 +5,15 @@ Loading of ANNOTATION data & preprocessing
 ==========================================
 */
 
-process salmon_transcriptome_indexing{
-    publishDir "./results/annotation_processing/salmon_indexing", overwrite: true
+process salmon_transcriptome_indexing {
+    publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true
     cache true
     label 'big_mem'
 
     input:
         path(transcriptome_reference)
     output:
-        path('transcriptome_index')
+        path "transcriptome_index"
     script:
         """
         salmon index -t ${transcriptome_reference} -i transcriptome_index --gencode
@@ -23,19 +23,18 @@ process salmon_transcriptome_indexing{
 
 process salmon_bulk_quantification{
     tag "${pair_id}, ${fastq1}, ${fastq2}"
-    publishDir "./results/annotation_processing/salmon_bulk_quantification", overwrite: true
+    publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true
     cache true
-    label 'big_mem'
-
+    label 'bulk_quantification'
+    
     input:
         path(transcriptome_index)
-        path(gtf_annotation_reference)
         tuple val(pair_id), path(fastq1), path(fastq2)
     output:
         path "${pair_id}.sf"
     script:
         """
-        salmon quant -i ${transcriptome_index} -l A -g ${gtf_annotation_reference} -1 ${fastq1} -2 ${fastq2} -o ${pair_id} --validateMappings -p ${task.cpus}
+        salmon quant -i ${transcriptome_index} -l ISR -1 ${fastq1} -2 ${fastq2} -o ${pair_id} --minScoreFraction 0.7 --vbPrior 5 --perNucleotidePrior -p ${task.cpus}
         mv ${pair_id}/quant.sf ${pair_id}.sf
         """
 }
@@ -43,7 +42,7 @@ process salmon_bulk_quantification{
 
 process tpm_counts_average{
     tag "${bulk_quants}"
-    publishDir "./results/annotation_processing/salmon_bulk_quantification", overwrite: true
+    publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true
     cache true
     label "small_mem"
 
@@ -55,13 +54,14 @@ process tpm_counts_average{
     script:
         """
         Rscript ${baseDir}/src/quantification_processing.R ${gtf_annotation_reference} merge_quants.txt
+        gawk '{print>\$1".gtf"}' reduced_annotation.tsv
         """
 }
 
 
 process isoform_selection_weighting{
     tag "${gtf.baseName}, ${merged_quants}"
-    publishDir "./results/annotation_processing/isoform_processing", overwrite: true, mode: 'copy'
+    publishDir "${params.outputDir}/Runfiles/annotation_processing/isoform_processing", overwrite: true, mode: 'copy'
     cache true
     label "small_mem"
 

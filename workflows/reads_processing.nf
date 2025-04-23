@@ -5,16 +5,6 @@ Loading of SAMPLES data & preprocessing according to the sequencing type
 =====================================================================
 */
 
-/* loading of subworkflows */
-include { read_10Xrepo } from '../subworkflows/loading_10X_files.nf'
-include { bam_splitting } from '../subworkflows/bam_splitting.nf'
-
-
-/*
-- In Case of processing of 10X based samples with a CellRanger repository -> Proceeding to an extraction of the required sample files
-=====================================================================================================================================
-*/
-
 workflow samples_loading {
     /* Loading of samples */
     take:
@@ -26,28 +16,27 @@ workflow samples_loading {
         /* - In case of 10X file type, extract required files... */
         if ( "${params.sequencing}" == "chromium" ) {
 
-            /* extract sampleIDs and associated paths */
+            // extract sampleIDs and associated paths */
             read_10Xrepo(samples_paths.map{ it=tuple(it[0], it[3]) })
 
-            /* formatting */
-            read_10Xrepo.out.map{ it = tuple( it[0], file(it[1]), file(it[2]), file(it[4]) ) }.set{ samples_selects }
-
-        } else if ( "${params.sequencing}" == "dropseq") {
+        } else  {
 
             samples_paths.map{ it = tuple( it[0], file(it[3]), file(it[4]), file(it[5]) ) }.set{ samples_selects }
-
-        } else
-            error( "Incoherency in [--sequencing] args !!" )
+        }
 
         if (params.barcodes != null) {
             /* parse barcodes file */
             ( Channel.fromPath(params.barcodes) | splitCsv(header:false) ).set{ barcodes_paths }
             (samples_selects.join(barcodes_paths, by:[0])).set{ samples_selects }
+
+            if( "${params.sequencing}" == "chromium") {
+                samples_selects.map{ it = tuple(it[0], it[1], it[2], it[3], it[5]) }.set{ samples_selects }
+            }
             selected_isoforms.flatMap { it = it[0] }.combine(samples_selects).set{ samples_selects }
 
         } else {
 
-            selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], it[3], null) }).set{ samples_selects }
+            selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], it[3], it[4]) }).set{ samples_selects }
 
         }
 
@@ -60,9 +49,91 @@ workflow samples_loading {
 }
 
 
+process read_10x {
+    tag "${sample_id}, ${repo}"
+    cache true
+    label "big_mem"
+
+    input:
+        tuple val(sample_id), path(repo)
+    output:
+        tuple val(sample_id), path("${sample_id}.bam"), path("${sample_id}.bam.bai"), path("${sample_id}.barcodes"), path("${sample_id}.counts.txt")
+    script:
+    """
+        Rscript ${baseDir}/src/read_10X.R ${repo}
+        ln -s ${repo}/outs/possorted_genome_bam.bam ${sample_id}.bam
+        ln -s ${repo}/outs/possorted_genome_bam.bam.bai ${sample_id}.bam.bai
+        zcat ${repo}/outs/filtered_feature_bc_matrix/barcodes.tsv.gz > ${sample_id}.barcodes
+    """
+}
+
+
+process bam_splitting {
+    tag "${sample_id}, ${chr}"
+    publishDir "${params.outputDir}/Runfiles/reads_processing/bam_splitting/${sample_id}"
+    cache true
+    label 'small_mem'
+
+    input: 
+        tuple val(chr), val(sample_id), path(bam), path(bai), val(bc_path), path(dge_matrix)
+    output:
+        tuple val(sample_id), val("${chr}"), path("${chr}.bam"), optional: true
+    script:
+    if( params.sequencing == "dropseq" )
+        if ( params.barcodes != null )
+            """
+            #Dropseq
+            #Filter reads , Remove duuplicates and split by chromosome
+            samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D XC:${bc_path} --keep-tag "XC,XM" | samtools sort > tmp.bam
+            #Remove all PCR duplicates ...
+            samtools markdup tmp.bam ${chr}.bam -r --barcode-tag XC --barcode-tag XM
+            rm tmp.bam
+             #check if empty bam file... if yes discard from the analysis
+            samtools view ${chr}.bam | head -1 > check
+            if [ -s check ]; then 
+                echo "ok" 
+            else 
+                rm -f ${chr}.bam
+            fi
+            """
+        else
+            """
+            #Filter reads , Remove duuplicates and split by chromosome
+            samtools view --subsample ${params.subsample} -b ${bam} ${chr} --keep-tag "XC,XM" | samtools sort > tmp.bam
+            #Remove all PCR duplicates ...
+            samtools markdup tmp.bam ${chr}.bam -r --barcode-tag XC --barcode-tag XM
+            rm tmp.bam
+             #check if empty bam file... if yes discard from the analysis
+            samtools view ${chr}.bam | head -1 > check
+            if [ -s check ]; then 
+                echo "ok" 
+            else 
+                echo "empty Dropseq BAM files..."
+                rm -f ${chr}.bam
+            fi
+            """
+    else
+        """
+        #Chromium_seq
+        #Filter reads , Remove duuplicates and split by chromosome
+        samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D CB:${bc_path} --keep-tag "CB,UB" | samtools sort > tmp.bam
+        #Remove all PCR duplicates ...
+        samtools markdup tmp.bam ${chr}.bam -r --barcode-tag CB --barcode-tag UB
+        rm tmp.bam
+        #check if empty bam file... if yes discard from the analysis
+        samtools view ${chr}.bam | head -1 > check
+        if [ -s check ]; then
+            echo "ok"
+        else
+            echo "empty chromium BAM files..."
+            rm -f ${chr}.bam
+        fi
+        """
+}
+
 process bedfile_conversion{
     tag "${sample_id}, ${chr}"
-    publishDir "./results/reads_processing/bedfile_conversion/${sample_id}"
+    publishDir "${params.outputDir}/Runfiles/reads_processing/bedfile_conversion/${sample_id}"
     cache true
     label "small_mem"
 
@@ -80,24 +151,26 @@ process bedfile_conversion{
 
 process reads_mapping_and_filtering {
     tag "${sample_id}, ${chr}, ${bed}, ${exons}"
-    publishDir "./results/reads_processing/mapping_filtering/${sample_id}"
+    publishDir "${params.outputDir}/Runfiles/reads_processing/mapping_filtering/${sample_id}"
     cache true
     label "big_mem"
+    maxForks 20
 
     input:
         tuple val(sample_id), val(chr), path(bed), path(exons), path(exons_unique), path(collapsed)
     output:
-        tuple val(sample_id), val(chr), path("${chr}.reads")
+        tuple val(sample_id), val(chr), path("${chr}.reads"), path("${sample_id}_${chr}_read_distrib.txt")
     script:
     """
         Rscript ${baseDir}/src/mapping_filtering.R ${bed} ${exons} ${chr}.reads
+        mv read_distance_distribution_on_transcriptomic_scope.txt ${sample_id}_${chr}_read_distrib.txt
     """
 }
 
 
 process ip_splitting {
     tag "${chr}"
-    publishDir "./results/internalp_filtering/ipdb_splitted"
+    publishDir "${params.outputDir}/Runfiles/internalp_filtering/ipdb_splitted"
     cache true
     label "small_mem"
 
@@ -115,7 +188,7 @@ process ip_splitting {
 
 process ip_filtering {
     tag "${sample_id}, ${chr}, ${ipdb}"
-    publishDir "./results/internalp_filtering/internalp_filtered/${sample_id}"
+    publishDir "${params.outputDir}/Runfiles/internalp_filtering/internalp_filtered/${sample_id}"
     cache true
     label "big_mem"
 

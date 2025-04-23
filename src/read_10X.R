@@ -17,15 +17,14 @@ args = parser$parse_args()
 sample_name = basename(args$repo_path)
 
 #Reading
-s.mat = data.frame(Read10X(paste0(args$repo_path,"/outs/filtered_feature_bc_matrix/")))
+print("reading file...")
+s.mat = data.frame(Read10X(paste0(args$repo_path,"/outs/filtered_feature_bc_matrix")))
 
 
 #Writing
 #Write Barcodes file
 barcodes.tab = data.table(colnames(s.mat)) %>%
   mutate(V1=stringr::str_replace(V1,"\\.","\\-"))
-barcodes.tab %>%
-  fwrite(file = paste0(sample_name, ".barcodes.txt"), col.names = F)
 
 #write Matrix
 colnames(s.mat) = barcodes.tab$V1
