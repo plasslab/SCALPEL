@@ -17,7 +17,7 @@ workflow samples_loading {
         if ( "${params.sequencing}" == "chromium" ) {
 
             // extract sampleIDs and associated paths */
-            read_10Xrepo(samples_paths.map{ it=tuple(it[0], it[3]) })
+            read_10x(samples_paths.map{ it=tuple(it[0], it[3]) }).set{ samples_selects}
 
         } else  {
 

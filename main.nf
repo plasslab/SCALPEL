@@ -222,7 +222,7 @@ workflow apa_characterization {
     /* workflow for differential isoform usage analysis */
     take:
         seurat_objs
-        bams
+        all_bams
 
     main:
         /* seurat objects merging */
