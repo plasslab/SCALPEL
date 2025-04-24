@@ -28,7 +28,7 @@ params.gene_fraction = "98%"
 params.binsize = 20
 params.subsample = 1
 
-params.output = "./results"
+params.outputDir = "./results"
 params.help = null
 
 

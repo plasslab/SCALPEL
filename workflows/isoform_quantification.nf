@@ -6,7 +6,7 @@ process probability_distribution {
 	tag "${sample_id}"
 	publishDir "${params.outputDir}/Runfiles/isoform_quantification/fragment_probabilities/${sample_id}", overwrite:'true'
 	cache true
-    label "big_mem"
+    label "probability_processing"
 
 	input:
         tuple val(sample_id), file(reads)
@@ -66,7 +66,7 @@ process cells_splitting{
 process em_algorithm{
 	tag "${sample_id}, ${cell.baseName}"
 	cache true
-        label "small_mem"
+        label "em_algorithm"
 
 	input:
         tuple val(sample_id), path(cell)

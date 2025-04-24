@@ -23,12 +23,14 @@ dge = melt(dge)
 #renaming
 colnames(dge) = c("gene_name","bc","counts")
 
-
 #left_joining by barcodes & gene_name
-dge_preds = left_join(preds, dge) %>%
-                stats::na.omit() %>% mutate(tr_counts=tr_prob * counts, gene_transcript = paste0(gene_name, "***", transcript_name)) %>% 
-                distinct(gene_transcript, bc, tr_counts) %>% 
-                pivot_wider(names_from=bc, values_from=tr_counts, values_fill = 0)
+dge_preds = left_join(preds, dge, by=c("bc", "gene_name")) %>% 
+    mutate(counts=ifelse(is.na(counts), 0, counts)) %>%
+    mutate(tr_counts=tr_prob * counts, gene_transcript = paste0(gene_name, "***", transcript_name)) %>% 
+    distinct(gene_transcript, bc, tr_counts) %>% 
+    pivot_wider(names_from=bc, values_from=tr_counts, values_fill = 0)
+
+print(head(dge_preds))
 
 #writing
 fwrite(dge_preds, file=args$OUTP, sep="\t")

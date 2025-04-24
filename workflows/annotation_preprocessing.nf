@@ -8,7 +8,7 @@ Loading of ANNOTATION data & preprocessing
 process salmon_transcriptome_indexing {
     publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true
     cache true
-    label 'big_mem'
+    label 'salmon_indexing'
 
     input:
         path(transcriptome_reference)

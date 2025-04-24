@@ -21,7 +21,7 @@ workflow samples_loading {
 
         } else  {
 
-            samples_paths.map{ it = tuple( it[0], file(it[3]), file(it[4]), file(it[5]) ) }.set{ samples_selects }
+            samples_paths.map{ it = tuple( it[0], file(it[3]), file(it[4]), null, file(it[5]) ) }.set{ samples_selects }
         }
 
         if (params.barcodes != null) {
@@ -30,7 +30,7 @@ workflow samples_loading {
             (samples_selects.join(barcodes_paths, by:[0])).set{ samples_selects }
 
             if( "${params.sequencing}" == "chromium") {
-                samples_selects.map{ it = tuple(it[0], it[1], it[2], it[3], it[5]) }.set{ samples_selects }
+                samples_selects.map{ it = tuple(it[0], it[1], it[2], it[5], it[4]) }.set{ samples_selects }
             }
             selected_isoforms.flatMap { it = it[0] }.combine(samples_selects).set{ samples_selects }
 
@@ -52,7 +52,7 @@ workflow samples_loading {
 process read_10x {
     tag "${sample_id}, ${repo}"
     cache true
-    label "big_mem"
+    label "samples_loading"
 
     input:
         tuple val(sample_id), path(repo)
@@ -69,7 +69,7 @@ process read_10x {
 
 
 process bam_splitting {
-    tag "${sample_id}, ${chr}"
+    tag "${sample_id}, ${chr}, ${bc_path}"
     publishDir "${params.outputDir}/Runfiles/reads_processing/bam_splitting/${sample_id}"
     cache true
     label 'small_mem'

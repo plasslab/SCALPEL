@@ -53,12 +53,14 @@ if(args$CLUSTERS == "NULL"){
 	seurat.obj$Clusters = (dplyr::left_join(seurat.obj@meta.data, cluster_df) %>% distinct(Barcodes, .keep_all=T))$Clusters
 }
 
+print(seurat.obj)
+
 #Differential analysis (3)
 #*********************
 if(n_distinct(seurat.obj$Clusters) == 1){
 	my_isoforms = data.table(output="Provide more condition with levels > 1 for differential isoform usage analysis")
 }else{
-	my_isoforms = Find_isoforms(seurat.obj, condition="Clusters", pval_adjusted=THR_PVAL, threshold_tr_abundance=THR_ABUND)
+	my_isoforms = FindIsoforms(JoinLayers(seurat.obj), group_by="Clusters", threshold_pval=THR_PVAL, threshold_abund=THR_ABUND, threshold_var=THR_VAR, extended=T) %>% suppressWarnings()
 }
 
 #Writing differential analysis table (4)
