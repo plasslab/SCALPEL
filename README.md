@@ -1,348 +1,163 @@
-<<<<<<< HEAD
-# SCALPEL , a nextflow based tool for the quantification of isoforms at single-cell resolution
-=======
-SCALPEL , a NextFlow based tool for the quantification of transcript isoforms at single-cell resolution
-======================================================================================
+# SCALPEL: A Nextflow-based Pipeline for Isoform Quantification at Single-Cell Resolution
 
->>>>>>> 0c3fe80469feb05951ba0efe3f2fb8270c284a47
-
-<!-- PROJECT LOGO -->
-<!-- <br />
 <div align="center">
-  <a href="">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Dessin_scalpel.svg/1200px-Dessin_scalpel.svg.png" alt="SCALPEL" width="300" height="300">
-  </a>
-</div>-->
-
-<div align="right">
-  <a href="">
-<<<<<<< HEAD
-    <img src="https://data.cyverse.org/dav-anon/iplant/home/franzx5/TUTO/PLOT0.png" alt="SCALPEL" >
-=======
-    <img src="https://data.cyverse.org/dav-anon/iplant/home/franzx5/SPERMATOGENESIS/SCALPEL_pipeline.png" alt="SCALPEL" >
->>>>>>> 0c3fe80469feb05951ba0efe3f2fb8270c284a47
-  </a>
+  <img src="https://data.cyverse.org/dav-anon/iplant/home/franzx5/SPERMATOGENESIS/SCALPEL_pipeline.png" alt="SCALPEL" width="600">
 </div>
 
+## About the Project
 
-<!-- ABOUT THE PROJECT -->
-## About The Project
+**SCALPEL** is a robust pipeline designed for transcript isoform quantification and alternative polyadenylation (APA) characterization using 3'-tagged single-cell RNA-seq (scRNA-seq) data. Built with **Nextflow**, it integrates multiple processing steps including read quantification, APA annotation, and isoform usage analysis.
 
-**SCALPEL** is a toolkit for the characterization of Alternative ployadenylation (APA) and the Isoform quantification using 3' tag-based scRNA-seq data.
+## Installation Options
 
+SCALPEL can be installed and run using one of the following options:
 
-<!-- GETTING STARTED -->
-## Getting Started
+### Option 1: Using Conda
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
-## Prerequisites
-
-- [Conda](https://www.anaconda.com/) package tool or [Mamba](https://github.com/mamba-org/mamba) (Fast reiplementation of conda)
-
-## Installation
-
-1. Clone the repo and enter in the folder
-```sh
-> git clone https://github.com/p-CMRC-LAB/SCALPEL.git
-```
-2. Install the required packages using the requirement.txt file in the SCALPEL folder
-```sh
-> conda env create -f SCALPEL/requirements.yml
-<<<<<<< HEAD
-> conda activate scalpel_conda
-```
-3. Within the CONDA environnement, install the R package Seurat v5
-```
-> Rscript -e 'remotes::install_github("satijalab/seurat", "seurat5", quiet = TRUE)'
-=======
-> conda activate scalpel_env
-```
-3. Within the CONDA environnement, launch R and install the following R packages
-```
-> install.packages(c("stringi", "Seurat"))
->>>>>>> 0c3fe80469feb05951ba0efe3f2fb8270c284a47
-```
-   
-Another solution (if conda installation takes long) can be to create a Conda environment, install Mamba (faster implementation of Conda) and install the packages using mamba:
-```sh
-> mamba env create --file SCALPEL/requirements.yml
-<<<<<<< HEAD
-> mamba activate scalpel_conda
-> Rscript -e 'remotes::install_github("satijalab/seurat", "seurat5", quiet = TRUE)'
+1. Clone the repository
+```bash
+git clone https://github.com/p-CMRC-LAB/SCALPEL.git
+cd SCALPEL
 ```
 
-## SCALPEL Usage
-[](https://github.com/p-CMRC-LAB/SCALPEL/edit/dev/README.md#usage)
-=======
+2. Create the Conda environment
+```bash
+conda env create -f requirements.yml
+conda activate scalpel_conda
 ```
 
-## SCALPEL usage
-
-### EX: Analysis on Lukassen et al dataset
-
-#### Input files
-
-For the need of the analysis in this vignette, the data used is a 10X dataset from the study from [Winterpacht A, Lukassen](https://pubmed.ncbi.nlm.nih.gov/30204153/) on Mouse. The demo data is 10X processed folder containing a BAM file with aligned reads from the published data [GSE104556](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE104556) 
-from GEO.
-
-##### Sample
->>>>>>> 0c3fe80469feb05951ba0efe3f2fb8270c284a47
-
-### Input files
-For running, SCALPEL requires to provide specific input files path & parameters:
-
--   _SAMPLE path_  **[--samplesheet]**
--   _FASTA transcriptome reference path_  **[--transcriptome]**
--   _GTF annotation file path_  **[--gtf]**
--   _Internal priming annotation file for the organism_  **[--ipdb]**  (download link below)
--   _Sequencing type (chromium or dropseq)_  **[--sequencing]**
-
-<<<<<<< HEAD
-  1.  Required, **[\-\-samplesheet]**: Provide within a  **CSV**  (ex: samplesheet.csv) file the following paths : 
-    -(In case of 10X based scRNA-seq sample [--sequencing  **chromium**] or DropSeq based scRNA-seq sample [--sequencing  **dropseq**]):    
-```sh
-<SAMPLE_NAME>,<FASTQ1_FILE_PATH>,<FASTQ2_FILE_PATH>,<10X_CELLRANGER_REPOSITORY_PATH>
+3. Install R packages (within the Conda environment)
+```bash
+Rscript -e 'remotes::install_github("satijalab/seurat", ref = "seurat5")'
 ```
 
-```sh
-<SAMPLE_NAME>,<FASTQ1_PATH>,<FASTQ2_PATH>,<BAM_PATH>,<BAM_INDEX_PATH>,<DGE_PATH>
-```
-=======
-##### Internal priming files which reference all the internal priming positions
-
-[(Human) Internal priming annotation - GRCh38](https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/databases/GRCh38_2020_A_polyA.track.tar.gz)
-
-[(Mouse) Internal priming annotation - mm10](https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/databases/mm10_polya.track.tar.gz)
-
-##### Reference genome annotation files
-
-The reference genome file annotation (GTF) and the reference transcript sequence (FASTA) can be downloaded on the [GENCODE](https://www.gencodegenes.org/mouse/release_M10.html) website associated to the organism.
-
-[(Mouse) GTF_annotation_file](https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M10/gencode.vM10.annotation.gtf.gz)
-
-[(Mouse) FASTA_reference_file](https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M10/gencode.vM10.transcripts.fa.gz)
-
-
-#### Execution
-
-For running, SCALPEL requires to provide specific input files path & parameters:
- - SAMPLE files folder path (\*.bam/\*.bai/\*.barcodes/\*.counts.txt)  **[\-\-samples]**
- - FASTQs files folder path (\*.fastq.gz) **[\-\-reads]**
- - FASTA transcriptome reference path **[--transcriptome]**
- - GTF annotation file path **[\-\-gtf]**
- - Internal priming annotation file **[\-\-ipdb]**
- - Sequencing type (chromium or dropseq) **[\-\-sequencing]**
-
-The script can be applied into a folder containing several samples to be analyzed. All the samples files with the defined extensions mentionned above (\*.bam/\*.bai/\*.barcodes/\*.counts.txt) will be processed according each sample name.
-
-**Differential isoform usage analysis on clusters:**
-Differential analysis usage is done in the downstream analysis step following the isoform quantification by default considering the different samples provided. To perform a differential analysis on defined cells cluster, use the optional argument **[\-\-clusters]**
-
-#### Processing
-You can print the Scalpel help documentation by running the following command
->>>>>>> 0c3fe80469feb05951ba0efe3f2fb8270c284a47
-
-  2. Optional, **[\-\-barcodes]**: Provide within a **CSV** (ex: barcodes_whitelist.csv) for each input sample, a barcode whitelist file path:
-```sh
-<SAMPLE_NAME>,<BARCODE_WHITELIST_FILE_PATH>
-```
-<<<<<<< HEAD
-
-  3. (Optional, **[\-\-clusters]**: Provide within a tab-separated file (ex: clusters.txt) containing the cells annotation information. This file should contain 3 column associated to:
-```sh
-<SAMPLE_NAME>,<BARCODE_CELL_TAGS>,<CLUSTER_ANNOTATION>
+4. Run SCALPEL
+```bash
+nextflow run -resume main.nf \
+  --sequencing chromium \
+  --samplesheet path/to/samplesheet.csv \
+  --transcriptome path/to/gencode.transcripts.fa \
+  --gtf path/to/gencode.annotation.gtf \
+  --ipdb path/to/mm10.polyA.track \
+  --barcodes path/to/barcodes.csv \
+  --clusters path/to/clusters.txt
 ```
 
-### Annotation files
+---
 
-- **Genome reference files**
-Following the organism for the study, the reference genome annotation files (**[--gtf]**, GTF) and reference transcript sequence (**[--transcriptome]**, FASTA) can be downloaded on [GENCODE](https://www.gencodegenes.org/) repository.
+### Option 2: Using Apptainer (Recommended for reproducibility)
 
-- **Internal priming files which reference all the internal priming positions**
-- [(Human) Internal priming annotation - GRCh38](https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/databases/GRCh38_2020_A_polyA.track.tar.gz) 
-- [(Mouse) Internal priming annotation - mm10](https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/databases/mm10_polya.track.tar.gz) 
+You can download a prebuilt Apptainer container with all SCALPEL dependencies from the following link:  
+[Download SCALPEL Container](https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/scalpel_container.sif)
 
-
-### SCALPEL execution
-After activating the _scalpel_conda_ CONDA environment, SCALPEL can be executed using Nextflow: 
-- All the computational ressource required for the execution by Nextflow can be defined within the _**SCALPEL/nextflow.config**_ file:
+1. Download the container and clone the repository
+```bash
+wget https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/scalpel_container.sif
+git clone https://github.com/p-CMRC-LAB/SCALPEL.git
+cd SCALPEL
 ```
-/* Define Nextflow configuration settings for SCALPEL pipeline execution */
-/* ===================================================================== */
 
-/* -> Processes
-================*/
-/* Enter here the desired Nextflow parameters for execution (see https://www.nextflow.io/docs/latest/index.html)*/
+2. Run SCALPEL using the container
+```bash
+nextflow run /path/to/SCALPEL/main.nf \
+  -with-apptainer /path/to/scalpel_container.sif \
+  --sequencing chromium \
+  --samplesheet path/to/samplesheet.csv \
+  --transcriptome path/to/gencode.transcripts.fa \
+  --gtf path/to/gencode.annotation.gtf \
+  --ipdb path/to/mm10.polyA.track
+```
 
-/* global parameters for execution */
+## Required Input Files
 
+| Parameter         | Description                                                             |
+|------------------|-------------------------------------------------------------------------|
+| `--samplesheet`  | CSV with sample names and paths to FASTQ/BAM/CellRanger output          |
+| `--transcriptome`| FASTA of reference transcriptome                                        |
+| `--gtf`          | GTF annotation file                                                     |
+| `--ipdb`         | Internal priming annotation file                                        |
+| `--barcodes`     | (Optional) Barcode whitelist per sample                                 |
+| `--clusters`     | (Optional) Tab-delimited file with cell-to-cluster mappings             |
+| `--sequencing`   | Must be `chromium` or `dropseq`                                         |
+
+Reference files:
+- [Mouse IP Annotation - mm10](https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/databases/mm10_polya.track.tar.gz)
+- [Human IP Annotation - GRCh38](https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/databases/GRCh38_2020_A_polyA.track.tar.gz)
+- [GENCODE Annotations](https://www.gencodegenes.org/)
+
+## Output Files and Execution Notes
+
+After execution, SCALPEL generates a `results/` directory containing key outputs for downstream analysis.
+
+### Key Output Files
+
+| File / Pattern             | Description                                                                 |
+|----------------------------|-----------------------------------------------------------------------------|
+| `*_filtered.bam`           | BAM files with deduplicated reads excluding internal priming artifacts.     |
+| `*_filtered.bam.bai`       | BAM index files.                                                           |
+| `*_APADGE.txt`             | APA-aware isoform-level expression matrix per sample.                      |
+| `*_seurat.RDS`             | Seurat object per sample.                                                  |
+| `iDGE_seurat.RDS`          | Merged Seurat object across all samples.                                  |
+| `DIU_table.csv`            | Differential isoform usage table.                                         |
+| `Runfiles/`                | Execution logs and process metadata.                                       |
+
+### Notes
+
+- Output filenames are prefixed by the sample name.
+- Seurat `.RDS` files are ready for downstream visualization and clustering in R.
+- `*_APADGE.txt` matrices are compatible with other statistical environments.
+
+For downstream analysis tutorials, visit:
+- [SCALPEL Wiki](https://github.com/p-CMRC-LAB/SCALPEL/wiki)
+- [10X Dataset Tutorial](https://github.com/p-CMRC-LAB/SCALPEL/wiki/SCALPEL-application-on-10X-scRNA%E2%80%90seq)
+- [DropSeq Dataset Tutorial](https://github.com/p-CMRC-LAB/SCALPEL/wiki/SCALPEL-application-on-DropSeq-scRNA%E2%80%90seq)
+
+## Customizing Execution with `nextflow.config`
+
+To modify resource usage and process settings, edit the `nextflow.config` file. For example:
+
+```groovy
 executor {
-    name = 'local' /* Adjust as needed (local/slurm/sge/etc...) */
-    cpus = 60      /* Adjust as needed */
+    name = 'slurm'               // Use 'local', 'slurm', etc.
+    cpus = 64
 }
-
-/* Parameters by process */
 
 process {
-    time = '120 m'
-        withLabel: big_mem {
-            cpus = 4
-        }
-        withLabel: small_mem {
-            cpus = 2
-        }
+    withLabel: big_mem {
+        cpus = 4
+        memory = '8 GB'
+    }
+    withLabel: small_mem {
+        cpus = 2
+        memory = '2 GB'
+    }
+    // Additional process-specific settings...
 }
 ```
 
-- **Execution**
+### Apptainer Users: Configure `runOptions`
 
-1. Configurate sample file **[--samplesheet]**:
-```sh
-> cat samplesheet.csv
-SRR6129050,SRR6129050_S1_L001_R1_001.fastq.gz,SRR6129050_S1_L001_R2_001.fastq.gz,/data/fake_data/DATAS/GSE104556/SAMPLES/SRR6129050/
-SRR6129051,SRR6129051_S1_L001_R1_001.fastq.gz,SRR6129051_S1_L001_R2_001.fastq.gz,/data/fake_data/DATAS/GSE104556/SAMPLES/SRR6129051/
+If using Apptainer, make sure to bind your local SCALPEL repository path inside the container by editing the following block in `nextflow.config`:
+
+```groovy
+apptainer {
+    enabled = true
+    autoMounts = true
+    runOptions = "--bind /path/to/SCALPEL:/path/to/SCALPEL"
+}
 ```
 
-2. (**Optional**), Configurate barcode whitelist file **[--barcodes]**:
-```sh
-> cat barcodes_whitelist.csv
-SRR6129050,/data/fake_data/NEW/SCALPEL/10X/SRR6129050_curatedBarcodes.txt
-SRR6129051,/data/fake_data/NEW/SCALPEL/10X/SRR6129051_curatedBarcodes.txt
+Adjust `/path/to/SCALPEL` to the full absolute path where the SCALPEL repository is located on your system.
 
-> head /data/fake_data/NEW/SCALPEL/10X/SRR6129050_curatedBarcodes.txt
-AAACCTGAGCTTATCG-1
-AAACCTGGTTGAGTTC-1
-AAACCTGTCAACGAAA-1
-AAACGGGCACAGGTTT-1
-AAACGGGTCATTTGGG-1
-...
-```
+## Reference
 
-3. (**Optional**), Configurate cluster annotation file **[--barcodes]**:
-```sh
-> cat clusters.txt
-SRR6129050  AAACCTGAGCTTATCG-1  RS1
-SRR6129050  AAACCTGGTTGAGTTC-1  RS1
-SRR6129050  AAACCTGTCAACGAAA-1  ES
-SRR6129051  AAACGGGCACAGGTTT-1  RS1
-SRR6129051  AAACGGGTCATTTGGG-1  ES
-...
-```
+Franz Ake, Sandra M. Fernández-Moya, Marcel Schilling, Akshay Jaya Ganesh, Ana Gutiérrez-Franco, Lei Li, Mireya Plass  
+**Quantification of transcript isoforms at the single-cell level using SCALPEL**  
+*bioRxiv* 2024.06.21.600022; [https://doi.org/10.1101/2024.06.21.600022](https://doi.org/10.1101/2024.06.21.600022)
 
-3. **Running**
-```sh
-> nextflow run -resume SCALPEL/main.nf \
-    --sequencing chromium \
-    --samplesheet samplesheet.csv \
-    --transcriptome gencode.vM10.transcripts.fa \
-    --gtf gencode.vM21.annotation.gtf \
-    --ipdb mm10.polyA.track \
-    --barcodes barcodes_whitelist.csv \ (Optional)
-    --clusters clusters.txt \ (Optional)
-```
+## Contact
 
-### Results
+Franz AKE – [@aerodx5](https://twitter.com/aerodx5) – fake@idibell.cat  
+GitHub: [https://github.com/p-CMRC-LAB/SCALPEL](https://github.com/p-CMRC-LAB/SCALPEL)
 
-During its execution, **SCALPEL** shows interactively in the Console all the information about the executed tasks:
-Then, a _**./results**_ folder is generated encompassing all the final and intermediated files generated by **SCALPEL** that can be used for further downstream analysis:
-
-_**./results/final_results**_ contains:
-  - the final differential isoform usage table between the input samples
-  - the Seurat object encompassing the iDGE of the input samples
-  - the iDGE table of each input sample
-
-```sh
-> cat ./results/final_results
-DIU_table.csv  iDGE_seurat.RDS.  SRR6129050/SRR6129050_APA_DGE.txt   SRR6129051/SRR6129051_APA_DGE.txt
-```
-
-Information about the collapsed isoforms by SCALPEL (see paper) can be found in _**./results/annotation_processing/isoform_processing**_
-
-```sh
-> cat ./results/annotation_processing/isoform_processing
-chr10_collapsed_isoforms.txt  chr13_collapsed_isoforms.txt  chr16_collapsed_isoforms.txt ...
-```
-
-**NB:**
-_**Important: The chromosome names must to be consistent between the BAM file and the annotation files. If the BAM file contains the '_chr_' character, the GTF and FASTA annotation files, and the internal priming reference annotation should contains the '_chr_' character, and inversely !**_
-
-_**The internal priming reference files provided contains by default the '_chr_' character in the chromosome names !!**_
-
-_**Be careful to delete the _work_ directory containing nextflow temporary files** when scalpel runs all its processs sucessfully and you don’t plan to relaunch scalpel with modified parameters. (This folder can fill an high memory physical space depending of the size of input files analyzed)_
-
-
-## More about SCALPEL Usage
-
-- [Example of SCALPEL application on 10X scRNA-seq](https://github.com/p-CMRC-LAB/SCALPEL/wiki/SCALPEL-application-on-10X-scRNA%E2%80%90seq)
-- [Example of SCALPEL application on DropSeq scRNA-seq](https://github.com/p-CMRC-LAB/SCALPEL/wiki/SCALPEL-application-on-DropSeq-scRNA%E2%80%90seq)
-
-
-## Downstream analysis
-=======
-  ===============================
-	SCALPEL - NF  P I P E L I N E
-	===============================
-
-	Execution:
-	Ex: nextflow run -resume scalpel.nf --sequencing <Sequencing type>
-	 --samples <SAMPLE files folder path>
-	 --reads <FASTQs files folder path> --transcriptome <FASTA transcriptome reference path>
-	 --annot <GTF annotation file path> --ipdb <Internal priming annotation file> 
-	
-	Input files:
-    - Annotation required files(required):
-        - transcriptome reference [--transcriptome]
-        - annotation GTF reference [--gtf]
-        - internal priming annotation [--ipdb]
-      
-    - Reads processing files (required):
-        - samples files [--samples]
-        - fastqs files [--reads]
-    
-    - Params:
-        Required:
-        - sequencing type (required): ${params.sequencing}
-
-        Optional:
-        - transcriptomic distance threshold [--dt_threshold] (optional, default 600bp)
-        - transcriptomic end distance threhsold [--dt_exon_end_threshold] (optional, default 30bp)
-        - minimal distance of Ip from isoform 3'ends (optional, default 60bp)
-        - params.threads [--threads] (default 30)
-        - params.cpus [--cpus] (default 30)
-
-**Important: The chromosome names must to be consistent between the BAM file and the annotation files. If the BAM file contains the '_chr_' character, the GTF and FASTA annotation files, and the internal priming reference annotation should contains the '_chr_' character, and inversely !**
-
-**The internal priming reference files provided contains by default the '_chr_' character in the chromosome names !!**
-
-**Be careful to delete the work directory containing nextflow temporary files** when scalpel runs all its processs sucessfully and you don’t plan to relaunch scalpel with modified parameters. (This folder can fill an high memory physical space depending of the size of input files analyzed)
-
-
-### Downstream analysis
->>>>>>> 0c3fe80469feb05951ba0efe3f2fb8270c284a47
-
-See [SCALPEL Wiki](https://github.com/p-CMRC-LAB/SCALPEL/wiki)
-
-
-# Contact
-
-Your Name - [@twitter](https://twitter.com/aerodx5) - fake@idibell.cat
-
-Project Link: [SCALPEL Github](https://github.com/p-CMRC-LAB/SCALPEL)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-<<<<<<< HEAD
-# Paper
-[Access SCALPEL_PAPER](https://www.biorxiv.org/content/10.1101/2024.06.21.600022v1)
-
-Quantification of transcript isoforms at the single-cell level using SCALPEL \
-Franz Ake, Sandra M. Fernández-Moya, Marcel Schilling, Akshay Jaya Ganesh, Ana Gutiérrez-Franco, Lei Li, Mireya Plass \
-bioRxiv 2024.06.21.600022; doi: https://doi.org/10.1101/2024.06.21.600022
-=======
-## Paper
-
-Paper writing ongoing...
->>>>>>> 0c3fe80469feb05951ba0efe3f2fb8270c284a47
+<p align="right"><a href="#top">Back to top</a></p>
