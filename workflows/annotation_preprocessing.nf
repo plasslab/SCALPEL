@@ -5,7 +5,11 @@ Loading of ANNOTATION data & preprocessing
 ==========================================
 */
 
+<<<<<<< HEAD
 process salmon_transcriptome_indexing {
+=======
+process salmon_transcriptome_indexing{
+>>>>>>> main
     publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true
     cache true
     label 'salmon_indexing'
@@ -23,7 +27,11 @@ process salmon_transcriptome_indexing {
 
 process salmon_bulk_quantification{
     tag "${pair_id}, ${fastq1}, ${fastq2}"
+<<<<<<< HEAD
     publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true
+=======
+    publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true, mode:'copy'
+>>>>>>> main
     cache true
     label 'bulk_quantification'
     
@@ -34,7 +42,11 @@ process salmon_bulk_quantification{
         path "${pair_id}.sf"
     script:
         """
+<<<<<<< HEAD
         salmon quant -i ${transcriptome_index} -l ISR -1 ${fastq1} -2 ${fastq2} -o ${pair_id} --minScoreFraction 0.7 --vbPrior 5 --perNucleotidePrior -p ${task.cpus}
+=======
+        salmon quant -i ${transcriptome_index} -l ISR -1 ${fastq1} -2 ${fastq2} -o ${pair_id} -p ${task.cpus} --minScoreFraction 0.7 --vbPrior 5 --perNucleotidePrior
+>>>>>>> main
         mv ${pair_id}/quant.sf ${pair_id}.sf
         """
 }
@@ -42,7 +54,11 @@ process salmon_bulk_quantification{
 
 process tpm_counts_average{
     tag "${bulk_quants}"
+<<<<<<< HEAD
     publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true
+=======
+    publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true, mode:'copy'
+>>>>>>> main
     cache true
     label "small_mem"
 

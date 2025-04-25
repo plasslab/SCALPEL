@@ -36,7 +36,11 @@ if (defined($help) || ! $fasta_file){
 my %seq = %{read_fasta ($fasta_file)};
 
 foreach my $chr (keys %seq){
+<<<<<<< HEAD
     my $seq = $seq{$chr};
+=======
+    my $seq = uc($seq{$chr});
+>>>>>>> main
     my $splus=$seq;
     $splus=~tr/ATGCN/10000/;
     my @plus  = @{find_matches ($splus,0)};

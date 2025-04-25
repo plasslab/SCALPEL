@@ -111,6 +111,7 @@ collapseIsoforms = function(x, distance_transcriptome, distance_ex){
 
 
 
+<<<<<<< HEAD
 # File opening
 #gtf..
 gtf = fread(GTF_PATH, col.names=c("seqnames","start","end","width","strand","gene_id","gene_name","transcript_id","transcript_name"))
@@ -136,6 +137,27 @@ if(nrow(qf)==0){
   gtf = gtf %>% 
     arrange(transcript_name,exon_number) %>% 
     group_by(transcript_name) %>% 
+=======
+# 1) File opening
+#----------------
+gtf = fread(GTF_PATH)
+qf = fread(QF_PATH, col.names=c("gene_name","transcript_name", "meanTPM", "bulk_TPMperc"))
+
+#Formatting table (A)
+gtf = gtf %>% 
+    distinct(seqnames,start,end,width,strand,gene_name,transcript_name) %>%
+    arrange(seqnames,start,desc(end)) %>%
+    stats::na.omit() %>%
+    group_by(transcript_name) %>%
+    dplyr::mutate(exon_number = ifelse(strand=="+",n():1,1:n())) %>%
+    arrange(transcript_name) %>%
+    data.table()
+
+#Calculate relative coordinates (B)
+gtf = gtf %>%
+    arrange(transcript_name,exon_number) %>%
+    group_by(transcript_name) %>%
+>>>>>>> main
     group_modify(~{
       starts = .x$start
       ends = .x$end
@@ -154,6 +176,7 @@ if(nrow(qf)==0){
       }
       .x
     }) %>%
+<<<<<<< HEAD
   distinct(seqnames,start,end,strand,startR,endR,gene_name,transcript_name,exon_number) %>%
   #Truncate isoforms within transcriptomic distance threshold
   dplyr::filter(startR < DT_THRESHOLD) %>%
@@ -200,11 +223,64 @@ if(nrow(qf)==0){
   gtf_unique = gtf %>% dplyr::select(gene_name,transcript_name) %>%
     distinct() %>% 
     group_by(gene_name) %>% 
+=======
+    distinct(seqnames,start,end,strand,startR,endR,gene_name,transcript_name,exon_number) %>%
+    data.table()
+
+#Truncate isoforms within transcriptomic distance threshold
+gtf = gtf %>%
+    dplyr::filter(startR < DT_THRESHOLD) %>%
+    mutate(start = ifelse(strand == "+" & endR>DT_THRESHOLD,end-(DT_THRESHOLD-startR),start),
+            end = ifelse(strand== "-" & endR>DT_THRESHOLD,start+(DT_THRESHOLD-startR),end),
+            endR = ifelse(endR>DT_THRESHOLD,DT_THRESHOLD-1,endR)) %>%
+    arrange(seqnames,start,desc(end),transcript_name)
+
+#Collapse similar isoforms
+collapseds.tab = gtf %>%
+    group_by(gene_name) %>%
+    group_modify(~{collapseIsoforms(.x, DT_THRESHOLD, DT_EX_THRESHOLD)}) %>%
+    ungroup()
+
+gtf = left_join(gtf, collapseds.tab) %>% 
+    mutate(collapsed = ifelse(is.na(collapsed),"none",collapsed))
+
+#writing
+distinct(gtf, gene_name, transcript_name, collapsed) %>% 
+    dplyr::filter(collapsed!="none") %>%
+    distinct() %>%
+fwrite(file = paste0(gtf$seqnames[1],"_collapsed_isoforms.txt"), sep="\t", col.names = F, row.names = F)
+
+#collapsing
+gtf = left_join(gtf, qf) %>% 
+    group_by(collapsed) %>%
+    dplyr::mutate(check=ifelse(collapsed!="none",max(bulk_TPMperc),bulk_TPMperc),
+            end=ifelse(strand=="+" & collapsed!="none" & exon_number==1,max(end),end),
+            start=ifelse(strand=="-" & collapsed!="none" & exon_number==1,min(start),start)) %>%
+    dplyr::filter(bulk_TPMperc==check) %>%
+    group_by(collapsed) %>%
+    dplyr::mutate(endR=ifelse(collapsed!="none" & exon_number==max(exon_number), (startR + (end-start)) - 1, endR)) %>%
+    ungroup() %>%
+    distinct(seqnames,start,end,startR,endR,strand,gene_name,transcript_name,exon_number,bulk_TPMperc,collapsed)
+
+#6) Writing
+#all exons entries
+fwrite(gtf, file = args$OUTPUT, sep="\t", nThread=1)
+
+#all genes with unique isoforms
+gtf_unique = gtf %>% dplyr::select(gene_name,transcript_name) %>% 
+    distinct() %>%
+    group_by(gene_name) %>%
+>>>>>>> main
     mutate(counts = n()) %>%
     dplyr::filter(counts == 1) %>% 
     ungroup()
+<<<<<<< HEAD
   
   gtf_unique = gtf_unique[,c("gene_name","counts")]
   data.table::fwrite(gtf_unique, file=args$OUTPUT_UNIQUE, sep="\t")
 
 }
+=======
+gtf_unique = gtf_unique[,c("gene_name","counts")]
+fwrite(gtf_unique, file=args$OUTPUT_UNIQUE, sep="\t")
+>>>>>>> main

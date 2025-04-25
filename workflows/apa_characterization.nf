@@ -41,6 +41,7 @@ process generation_filtered_bams{
         tuple val(sampleID), file(rids)
     output:
         file("${sampleID}_filtered.bam*")
+<<<<<<< HEAD
     script:
         """
         cat *.readid > ALL_RIDS.txt
@@ -48,5 +49,12 @@ process generation_filtered_bams{
         samtools view -b -N ALL_RIDS.txt tmp.bam > ${sampleID}_filtered.bam 
         samtools index ${sampleID}_filtered.bam
         rm tmp.bam
+=======
+
+    script:
+        """
+	    samtools merge -o ${sampleID}_filtered.bam ${bams} -@ ${task.cpus}
+        samtools index ${sampleID}_filtered.bam
+>>>>>>> main
         """
 }

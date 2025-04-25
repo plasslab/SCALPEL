@@ -6,7 +6,11 @@ process probability_distribution {
 	tag "${sample_id}"
 	publishDir "${params.outputDir}/Runfiles/isoform_quantification/fragment_probabilities/${sample_id}", overwrite:'true'
 	cache true
+<<<<<<< HEAD
     label "probability_processing"
+=======
+    label "big_mem"
+>>>>>>> main
 
 	input:
         tuple val(sample_id), file(reads)

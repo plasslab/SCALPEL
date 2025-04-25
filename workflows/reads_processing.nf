@@ -16,6 +16,7 @@ workflow samples_loading {
         /* - In case of 10X file type, extract required files... */
         if ( "${params.sequencing}" == "chromium" ) {
 
+<<<<<<< HEAD
             // extract sampleIDs and associated paths */
             read_10x(samples_paths.map{ it=tuple(it[0], it[3]) }).set{ samples_selects}
 
@@ -23,10 +24,20 @@ workflow samples_loading {
 
             samples_paths.map{ it = tuple( it[0], file(it[3]), file(it[4]), null, file(it[5]) ) }.set{ samples_selects }
         }
+=======
+            // extract sampleIDs and associated paths
+            read_10x( samples_paths.map{ it=tuple(it[0], it[3]) }).set{ samples_selects }
 
-        if (params.barcodes != null) {
-            /* parse barcodes file */
+        } else {
+
+            samples_paths.map{ it = tuple( it[0], file(it[3]), file(it[4]), null, file(it[5]) ) }.set{ samples_selects }
+        }
+
+        if ( params.barcodes != null ) {
+>>>>>>> main
+
             ( Channel.fromPath(params.barcodes) | splitCsv(header:false) ).set{ barcodes_paths }
+<<<<<<< HEAD
             (samples_selects.join(barcodes_paths, by:[0])).set{ samples_selects }
 
             if( "${params.sequencing}" == "chromium") {
@@ -37,18 +48,44 @@ workflow samples_loading {
         } else {
 
             selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], it[3], it[4]) }).set{ samples_selects }
+=======
+            (samples_selects.join(barcodes_paths, by:[0])).map{ it = tuple( it[0], it[1], it[2], it[5], it[4] )}.set{ samples_selects }
+>>>>>>> main
 
         }
+        /* Integrate isoforms metadata */
+        selected_isoforms.flatMap { it = it[0] }.combine(samples_selects).set{ samples }
 
-        /* processing of input BAM file... */
-        bam_splitting( samples_selects )
+        /* split bam files */
+        bam_splitting( samples )
 
     emit:
         selected_bams = bam_splitting.out
-        sample_files = samples_selects
+        sample_files = samples
 }
 
 
+
+process read_10x {
+    tag "${sample_id}, ${repo}"
+    cache true
+    label "big_mem"
+
+    input:
+        tuple val(sample_id), path(repo)
+    output:
+        tuple val(sample_id), path("${sample_id}.bam"), path("${sample_id}.bam.bai"), path("${sample_id}.barcodes"), path("${sample_id}.counts.txt")
+    script:
+    """
+        Rscript ${baseDir}/src/read_10X.R ${repo}
+        ln -s ${repo}/outs/possorted_genome_bam.bam ${sample_id}.bam
+        ln -s ${repo}/outs/possorted_genome_bam.bam.bai ${sample_id}.bam.bai
+        zcat ${repo}/outs/filtered_feature_bc_matrix/barcodes.tsv.gz > ${sample_id}.barcodes
+    """
+}
+
+
+<<<<<<< HEAD
 process read_10x {
     tag "${sample_id}, ${repo}"
     cache true
@@ -70,6 +107,10 @@ process read_10x {
 
 process bam_splitting {
     tag "${sample_id}, ${chr}, ${bc_path}"
+=======
+process bam_splitting {
+    tag "${sample_id}, ${chr}"
+>>>>>>> main
     publishDir "${params.outputDir}/Runfiles/reads_processing/bam_splitting/${sample_id}"
     cache true
     label 'small_mem'
@@ -108,11 +149,18 @@ process bam_splitting {
             if [ -s check ]; then 
                 echo "ok" 
             else 
+<<<<<<< HEAD
                 echo "empty Dropseq BAM files..."
                 rm -f ${chr}.bam
             fi
             """
     else
+=======
+                rm -f ${chr}.bam
+            fi
+            """
+    else if( params.sequencing == "chromium" )
+>>>>>>> main
         """
         #Chromium_seq
         #Filter reads , Remove duuplicates and split by chromosome
@@ -125,12 +173,19 @@ process bam_splitting {
         if [ -s check ]; then
             echo "ok"
         else
+<<<<<<< HEAD
             echo "empty chromium BAM files..."
+=======
+>>>>>>> main
             rm -f ${chr}.bam
         fi
         """
 }
 
+<<<<<<< HEAD
+=======
+    
+>>>>>>> main
 process bedfile_conversion{
     tag "${sample_id}, ${chr}"
     publishDir "${params.outputDir}/Runfiles/reads_processing/bedfile_conversion/${sample_id}"
