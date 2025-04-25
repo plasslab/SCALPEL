@@ -8,66 +8,154 @@ require(Gviz)
 require(ggplot2)
 require(stringr)
 
-Find_isoforms = function(seurat.obj, pval_adjusted=0.05, condition="orig.ident", assay="RNA",
-                         threshold_tr_abundance = 0.10){
-  # ---------------------------------------------------------------------------
-  #Function to Find differentially expressed isoforms in the conditions defined
-  # ---------------------------------------------------------------------------
 
-  message("processing...")
-
-  #1/ Find genes with at least 2 transcripts
-  message("Find genes with at least 2 transcripts...")
-  my.genes = data.frame(gene_tr = rownames(seurat.obj)) %>%
-    tidyr::separate(col=gene_tr, into=c("gene","trs"), sep = "\\*\\*\\*", remove = F) %>%
-    group_by(gene) %>%
-    reframe(nb.trs = n_distinct(trs), gene_tr) %>%
-    dplyr::filter(nb.trs>1)
-
-  #2/ Get Isoform expression in defined conditions
-  message("Get isoforms expression in the condition defined...")
-  ALL_expression = AggregateExpression(object = subset(seurat.obj, features = my.genes$gene_tr),
-                                       assays = assay, group.by = condition, verbose = T,
-                                       return.seurat = F)[[assay]] %>% data.frame() %>%
-    dplyr::mutate(gene_tr = rownames(.)) %>%
-    tidyr::separate(col="gene_tr", into=c("gene_name","transcript_name"), remove = F, sep="\\*\\*\\*") %>%
-    data.table()
-  colnames(ALL_expression) = str_replace(colnames(ALL_expression),"X","")
-
-  #filter trs based on abundance threshold & X2 testing...
-  message("filter trs based on abundance threshold and X2 testing...")
-  conds = unlist(unique(seurat.obj[[condition]]))
-  tmp_all = pbapply::pblapply(split(ALL_expression, ALL_expression$gene_name), function(.x){
-    if(nrow(.x)==1){return(NULL)}
-    #get columns condition and perform normalization...
-    tmp = as_tibble(apply(as_tibble(.x)[,conds], 2, function(x) round(x/sum(x),2)))
-    #discard isoforms under the threshold in all the condition
-    tmp = .x[which((rowSums(tmp < threshold_tr_abundance) == length(conds)) == FALSE),]
-    #perform X2 test for satisfying genes if nb.isoforms > 1
-    if(nrow(tmp)>1){
-      #perform X2 test
-      tmp.test = chisq.test(as_tibble(tmp)[,conds], correct = T)
-      tmp$p_value = tmp.test$p.value
-      return(tmp)
+FindIsoforms <- function (seurat_obj, group_by, split_by = NULL, assay = "RNA",
+                           threshold_pval = 0.05, threshold_abund = 0.1, threshold_var=0.05,
+                           extended=F) {
+    
+    #check presence of group.by into seurat object
+    if (!(group_by %in% colnames(seurat_obj[[]]))) {
+        
+        stop(paste0("Error: ", group.by, "not found in Seurat object !"))
+        
     } else {
-      return(NULL)
+        #process seurat object if split.by is NULL
+        if ( is.null(split_by) ) {
+            message("process seurat object...")
+            
+            #get tab.counts (1)
+            message("Aggregating counts in conditions...")
+            counts.tab = Extract_aggTab(seurat_obj, group = group_by, assay)
+            
+            #process filtering ops by gene (2)
+            message("Performing filtering and comparison test...")
+            all_results = pbapply::pblapply(split(counts.tab, counts.tab$gene_name), function(geneTab) {
+                #apply filtering checks & X2 test...
+                if(nrow(geneTab)>1){
+                    return(Perform_xTest(geneTab, threshold_abund, threshold_var))
+                } else {
+                    tmp = geneTab %>% dplyr::mutate(thr.abund=T, thr.var=T, p.value=NA, statistic=NA)
+                    return(tmp)
+                }
+            }) %>% rbindlist()
+            
+            #calculate adjusted P.values (3)
+            all_results = all_results %>%
+                dplyr::mutate(p.value.adjusted = ifelse(thr.abund==F & thr.var==F & (!(is.na(p.value))), 0, NA))
+            
+            tmpA = dplyr::filter(all_results, p.value.adjusted==0)
+            tmpA$p.value.adjusted = p.adjust(tmpA$p.value, method = "BH")
+            tmpB = dplyr::filter(all_results, is.na(p.value.adjusted))
+            all_results = rbind(tmpA, tmpB) %>% dplyr::arrange(p.value.adjusted, gene_name, transcript_name) %>%
+                dplyr::distinct() %>%
+                data.table::data.table()
+            
+            #apply p.value threshold (4)
+            if(extended==F){
+                all_results = dplyr::filter(all_results, p.value.adjusted<threshold_pval) %>%
+                    select(!c("thr.abund", "thr.var"))
+            } else {
+                return(all_results)
+            }
+            
+            #return
+            return(all_results)
+            
+        } else {
+            #check presence of split.by var into seurat object
+            if (!(split_by %in% colnames(seurat_obj[[]]))) {
+                
+                stop(paste0("Error: ", group_by, "not found in Seurat object !"))
+                
+            } else {
+                message("split seurat object and process with each object...")
+                
+                #splitting
+                seurat.objs = Seurat::SplitObject(JoinLayers(seurat_obj), split.by = split_by)
+                
+                #processing
+                message("Generation of aggregate counts...")
+                lapply(names(seurat.objs), function(curr_obj){
+                    message(curr_obj)
+                    
+                    #get tab.counts
+                    counts.tab = Extract_aggTab(seurat.objs[[curr_obj]], group = group_by, assay, n=1) %>% 
+                        dplyr::mutate(split.by = curr_obj)
+                    
+                })
+            }
+        }
     }
-  })
+}
 
-  #3/deleting NULL occurences
-  tmp_all = tmp_all[!sapply(tmp_all,is.null)]
+# Functions associateds..
+#========================
 
-  tmp = tmp_all %>% rbindlist()
+Extract_aggTab <- function (seurat_obj, group, assay) {
+    #Get aggregated counts tab
+    tmp = Seurat::AggregateExpression(seurat_obj, group.by = group, assays = assay)[[1]]
+    names.cols = colnames(tmp)
+    tmp = tmp %>%
+        tibble::as_tibble(rownames="gene.tr") %>%
+        tidyr::separate(gene.tr, c("gene_name","transcript_name"), sep="\\*\\*\\*", remove = F) %>%
+        dplyr::arrange(gene_name, transcript_name)
+    
+    #get genes with nb isoforms > n
+    tmp.stats = dplyr::distinct(tmp, gene_name, transcript_name) %>%
+        dplyr::group_by(gene_name) %>%
+        dplyr::summarise(nb.isoforms = n_distinct(transcript_name))
+    
+    tmp = data.table::data.table(dplyr::filter(tmp, gene_name %in% tmp.stats$gene_name))
+    colnames(tmp) = c("gene.tr", "gene_name", "transcript_name", names.cols)
+    return(tmp)
+}
 
-  #4/ adjust_pvalue
-  message("P.value adjusting......")
-  tmp = dplyr::mutate(tmp, p_value.adjusted = p.adjust(p_value, method="BH")) %>%
-    dplyr::filter(p_value.adjusted <= pval_adjusted) %>%
-    arrange(p_value.adjusted, gene_tr) %>%
-    data.table()
-
-  #5/return
-  return(tmp)
+Perform_xTest <- function(tab, threshold.abund, threshold.var) {
+    #process filtering ops
+    tab = tab %>%
+        rowwise() %>%
+        mutate(
+            row_sum = sum(c_across(where(is.numeric)))
+        ) %>%
+        ungroup() %>%
+        mutate(
+            thr.abund = if_all(where(is.numeric) & !matches("row_sum"), ~ (. / sum(.)) < threshold.abund),
+            thr.var = all(across(where(is.numeric) & !matches("row_sum"), ~ sd(.) < 0.05))
+        ) %>%
+        select(-row_sum)
+    
+    #get numeric table
+    numTab = tab %>% dplyr::filter(thr.abund==F & thr.var==F) %>%
+        dplyr::select(where(is.numeric))
+    
+    #perform X2 test
+    if(nrow(numTab)>1){
+        #perform test if more than 1 isoforms following filtering ops
+        chi2_res <- chisq.test(as.matrix(numTab))
+        
+        #check if X2 test condition are reunited (counts>=5)...
+        if (all(round(chi2_res$expected,0) >= 5)) {
+            #update tab
+            tab = tab %>% dplyr::mutate(
+                p.value = chi2_res$p.value,
+                statistic = chi2_res$statistic
+            )
+        }else{
+            #update tab
+            tab = tab %>% dplyr::mutate(
+                p.value = NA,
+                statistic = NA
+            )
+        }
+    } else {
+        #update tab
+        tab = tab %>% dplyr::mutate(
+            p.value = NA,
+            statistic = NA
+        )
+    }
+    #return
+    return(tab)
 }
 
 
