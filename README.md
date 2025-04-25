@@ -1,7 +1,7 @@
 # SCALPEL: A Nextflow-based Pipeline for Isoform Quantification at Single-Cell Resolution
 
 <div align="center">
-  <img src="https://data.cyverse.org/dav-anon/iplant/home/franzx5/SPERMATOGENESIS/SCALPEL_pipeline.png" alt="SCALPEL" width="600">
+  <img src="https://data.cyverse.org/dav-anon/iplant/home/franzx5/SPERMATOGENESIS/SCALPEL_pipeline.png" alt="SCALPEL" width="800">
 </div>
 
 ## About the Project
@@ -26,12 +26,7 @@ conda env create -f requirements.yml
 conda activate scalpel_conda
 ```
 
-3. Install R packages (within the Conda environment)
-```bash
-Rscript -e 'remotes::install_github("satijalab/seurat", ref = "seurat5")'
-```
-
-4. Run SCALPEL
+3. Run SCALPEL
 ```bash
 nextflow run -resume main.nf \
   --sequencing chromium \
@@ -48,11 +43,11 @@ nextflow run -resume main.nf \
 ### Option 2: Using Apptainer (Recommended for reproducibility)
 
 You can download a prebuilt Apptainer container with all SCALPEL dependencies from the following link:  
-[Download SCALPEL Container](https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/scalpel_container.sif)
+[Download SCALPEL Container](https://data.cyverse.org/dav-anon/iplant/home/franzx5/SCALPEL.container.sif)
 
 1. Download the container and clone the repository
 ```bash
-wget https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/scalpel_container.sif
+wget https://data.cyverse.org/dav-anon/iplant/home/franzx5/SCALPEL.container.sif
 git clone https://github.com/p-CMRC-LAB/SCALPEL.git
 cd SCALPEL
 ```
@@ -108,9 +103,11 @@ After execution, SCALPEL generates a `results/` directory containing key outputs
 - `*_APADGE.txt` matrices are compatible with other statistical environments.
 
 For downstream analysis tutorials, visit:
-- [SCALPEL Wiki](https://github.com/p-CMRC-LAB/SCALPEL/wiki)
-- [10X Dataset Tutorial](https://github.com/p-CMRC-LAB/SCALPEL/wiki/SCALPEL-application-on-10X-scRNA%E2%80%90seq)
-- [DropSeq Dataset Tutorial](https://github.com/p-CMRC-LAB/SCALPEL/wiki/SCALPEL-application-on-DropSeq-scRNA%E2%80%90seq)
+- [Example of SCALPEL application on 10X scRNA-seq](https://github.com/p-CMRC-LAB/SCALPEL/wiki/SCALPEL-application-on-10X-scRNA%E2%80%90seq)
+- [Example of SCALPEL application on DropSeq scRNA-seq](https://github.com/p-CMRC-LAB/SCALPEL/wiki/SCALPEL-application-on-DropSeq-scRNA%E2%80%90seq)
+- [Downstream analysis Wiki](https://github.com/p-CMRC-LAB/SCALPEL/wiki)
+
+---
 
 ## Customizing Execution with `nextflow.config`
 
@@ -148,6 +145,8 @@ apptainer {
 ```
 
 Adjust `/path/to/SCALPEL` to the full absolute path where the SCALPEL repository is located on your system.
+
+---
 
 ## Reference
 
