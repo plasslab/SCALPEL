@@ -8,7 +8,6 @@ require(Gviz)
 require(ggplot2)
 require(stringr)
 
-<<<<<<< HEAD
 
 FindIsoforms <- function (seurat_obj, group_by, split_by = NULL, assay = "RNA",
                            threshold_pval = 0.05, threshold_abund = 0.1, threshold_var=0.05,
@@ -19,49 +18,6 @@ FindIsoforms <- function (seurat_obj, group_by, split_by = NULL, assay = "RNA",
         
         stop(paste0("Error: ", group.by, "not found in Seurat object !"))
         
-=======
-Find_isoforms = function(seurat.obj, pval_adjusted=0.05, condition="orig.ident", assay="RNA",
-                         threshold_tr_abundance = 0.10){
-  # ---------------------------------------------------------------------------
-  #Function to Find differentially expressed isoforms in the conditions defined
-  # ---------------------------------------------------------------------------
-
-  message("processing...")
-
-  #1/ Find genes with at least 2 transcripts
-  message("Find genes with at least 2 transcripts...")
-  my.genes = data.frame(gene_tr = rownames(seurat.obj)) %>%
-    tidyr::separate(col=gene_tr, into=c("gene","trs"), sep = "\\*\\*\\*", remove = F) %>%
-    group_by(gene) %>%
-    reframe(nb.trs = n_distinct(trs), gene_tr) %>%
-    dplyr::filter(nb.trs>1)
-
-  #2/ Get Isoform expression in defined conditions
-  message("Get isoforms expression in the condition defined...")
-  ALL_expression = AggregateExpression(object = subset(seurat.obj, features = my.genes$gene_tr),
-                                       assays = assay, group.by = condition, verbose = T,
-                                       return.seurat = F)[[assay]] %>% data.frame() %>%
-    dplyr::mutate(gene_tr = rownames(.)) %>%
-    tidyr::separate(col="gene_tr", into=c("gene_name","transcript_name"), remove = F, sep="\\*\\*\\*") %>%
-    data.table()
-  colnames(ALL_expression) = str_replace(colnames(ALL_expression),"X","")
-
-  #filter trs based on abundance threshold & X2 testing...
-  message("filter trs based on abundance threshold and X2 testing...")
-  conds = unlist(unique(seurat.obj[[condition]]))
-  tmp_all = pbapply::pblapply(split(ALL_expression, ALL_expression$gene_name), function(.x){
-    if(nrow(.x)==1){return(NULL)}
-    #get columns condition and perform normalization...
-    tmp = as_tibble(apply(as_tibble(.x)[,conds], 2, function(x) round(x/sum(x),2)))
-    #discard isoforms under the threshold in all the condition
-    tmp = .x[which((rowSums(tmp < threshold_tr_abundance) == length(conds)) == FALSE),]
-    #perform X2 test for satisfying genes if nb.isoforms > 1
-    if(nrow(tmp)>1){
-      #perform X2 test
-      tmp.test = chisq.test(as_tibble(tmp)[,conds], correct = T)
-      tmp$p_value = tmp.test$p.value
-      return(tmp)
->>>>>>> main
     } else {
         #process seurat object if split.by is NULL
         if ( is.null(split_by) ) {

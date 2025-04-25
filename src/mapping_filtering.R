@@ -15,11 +15,6 @@ args = parser$parse_args()
 
 
 #0. Opening
-<<<<<<< HEAD
-=======
-#----------
-message("reading ops...")
->>>>>>> main
 #reads
 reads = fread(
   args$bed,
@@ -38,10 +33,6 @@ gtf = fread(args$exons, nThread=1)
 reads$start.rd = reads$start.rd + 1
 
 #Processing of reads
-<<<<<<< HEAD
-=======
-message("Processing of reads...")
->>>>>>> main
 reads = reads %>%
   dplyr::filter(start.rd>min(gtf$start)-1e5 & end.rd<max(gtf$end)+1e5) %>%
   #discard pcr replicates
@@ -146,10 +137,6 @@ rm(trs.todel)
 gc()
 
 #Calculate relative coordinates
-<<<<<<< HEAD
-=======
-message("Calculate relative coordinates...")
->>>>>>> main
 reads = reads %>%
   dplyr::mutate(start.rdR = ifelse(strand=="+",endR-(end.rd-start),NA),
          end.rdR = ifelse(strand=="+",endR-(start.rd-start),NA),

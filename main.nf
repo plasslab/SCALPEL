@@ -26,10 +26,6 @@ params.de_threshold = 30
 params.ip_threshold = 60
 params.gene_fraction = "98%"
 params.binsize = 20
-<<<<<<< HEAD
-=======
-params.outputDir = "./results"
->>>>>>> main
 params.subsample = 1
 
 params.outputDir = "./results"
@@ -58,7 +54,7 @@ if( params.help )
 
     - Params:
         Required:
-        - sequencing type [--sequencing] (required): ${params.sequencing}
+        - sequencing type (required): ${params.sequencing}
 
         Optional:
         - barcodes whitelist [--barcodes] (optional): ${params.barcodes}
@@ -121,14 +117,12 @@ log.info """\
         - gene fraction abundance threshold [--gene_fraction] (optional, default '98%'): ${params.gene_fraction}
         - binsize threshold for transcriptomic distance based probability [--binsize] (optional, default '20): ${params.binsize}
         - reads subsampling threshold [--subsample] (optional, default 1): ${params.subsample}
+
 """.stripIndent()
 
-<<<<<<< HEAD
 
 // - Workflows definition
 // ======================
-=======
->>>>>>> main
     
 workflow annotation_preprocessing {
     /* workflow for loading and processing of annotation input files */
@@ -232,15 +226,15 @@ workflow apa_characterization {
 
     main:
         /* seurat objects merging */
-        //differential_isoform_usage( seurat_objs.collect() )
+        differential_isoform_usage( seurat_objs.collect() )
 
          /* Merge the filtered BAM files */
         all_bams.map{ it = it[0,2] }.set{ all_bams_sel }
         all_bams.map{ it = it[0,3] }.set{ all_rids }
         generation_filtered_bams( all_bams_sel, all_rids )
 
-    //emit:
-        //dius = differential_isoform_usage.out
+    emit:
+        dius = differential_isoform_usage.out
 }
 
 
