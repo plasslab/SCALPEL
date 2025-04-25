@@ -10,9 +10,14 @@
 
 ## Installation Options
 
+### Prerequisite:
+
+**Nextflow v24.10.6** : [Official page](https://www.nextflow.io/docs/latest/install.html) / [CONDA](https://anaconda.org/bioconda/nextflow)
+
+
 SCALPEL can be installed and run using one of the following options:
 
-### Option 1: Using Conda
+### Option 1: Using Conda environment
 
 1. Clone the repository
 ```bash
@@ -26,7 +31,7 @@ conda env create -f requirements.yml
 conda activate scalpel_conda
 ```
 
-3. Run SCALPEL
+3. Run SCALPEL within the environment
 ```bash
 nextflow run -resume main.nf \
   --sequencing chromium \
@@ -40,7 +45,7 @@ nextflow run -resume main.nf \
 
 ---
 
-### Option 2: Using Apptainer (Recommended for reproducibility)
+### Option 2: Using Apptainer container
 
 You can download a prebuilt Apptainer container with all SCALPEL dependencies from the following link:  
 [Download SCALPEL Container](https://data.cyverse.org/dav-anon/iplant/home/franzx5/SCALPEL.container.sif)
