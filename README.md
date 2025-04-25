@@ -1,7 +1,7 @@
 # SCALPEL: A Nextflow-based Pipeline for Isoform Quantification at Single-Cell Resolution
 
 <div align="center">
-  <img src="https://data.cyverse.org/dav-anon/iplant/home/franzx5/SPERMATOGENESIS/SCALPEL_pipeline.png" alt="SCALPEL" width="900">
+  <img src="https://data.cyverse.org/dav-anon/iplant/home/franzx5/SPERMATOGENESIS/SCALPEL_pipeline.png" alt="SCALPEL" width="800">
 </div>
 
 ## About the Project
@@ -169,7 +169,8 @@ bioRxiv 2024.06.21.600022; doi: [10.1101/2024.06.21.600022](https://doi.org/10.1
 
 ## Contact
 
-Franz AKE – [@aerodx5](https://twitter.com/aerodx5) – fake@idibell.cat  
+Franz AKE – [@aerodx5](https://twitter.com/aerodx5) – fake@idibell.cat  / aerod7710@gmail.com
+
 GitHub: [https://github.com/p-CMRC-LAB/SCALPEL](https://github.com/p-CMRC-LAB/SCALPEL)
 
 <p align="right"><a href="#top">Back to top</a></p>
