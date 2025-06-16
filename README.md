@@ -162,6 +162,6 @@ Franz Ake, Sandra M. Fernández-Moya, Marcel Schilling, Akshay Jaya Ganesh, Ana 
 ## Contact
 
 Franz AKE – [@aerodx5](https://twitter.com/aerodx5) – fake@idibell.cat  
-GitHub: [https://github.com/p-CMRC-LAB/SCALPEL](https://github.com/p-CMRC-LAB/SCALPEL)
+GitHub: [https://github.com/plasslab/SCALPEL](https://github.com/plasslab/SCALPEL)
 
 <p align="right"><a href="#top">Back to top</a></p>
