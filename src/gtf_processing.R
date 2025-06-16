@@ -55,7 +55,7 @@ collapseIsoforms = function(x, distance_transcriptome, distance_ex){
     dplyr::mutate(clusters = ifelse(strand=="-",groupExon_ends(start, distance_ex),groupExon_ends(end, distance_ex)))
   simIsoforms = group_by(x.tmp, clusters) %>% dplyr::filter(n()>1)
   simIsoforms = lapply(split(simIsoforms, simIsoforms$clusters), function(x) x$transcript_name)
-  x = suppressMessages(dplyr::left_join(x, distinct(x.tmp, transcript_name, clusters)))
+  x = suppressMessages(dplyr::left_join(x, distinct(x.tmp, transcript_name, clusters))) %>% data.table()
 
   #filter input tab
   collapsed = data.frame(collapsed=character(0))
@@ -167,11 +167,11 @@ if(nrow(qf)==0){
   collapseds.tab = gtf %>%
     group_by(gene_name) %>%  
     group_modify(~{collapseIsoforms(.x, DT_THRESHOLD, DT_EX_THRESHOLD)}) %>% 
-    ungroup()
+    ungroup() ; collapseds.tab
 
 
   #. Format collapsed table
-  gtf = left_join(gtf, collapseds.tab) %>% 
+  gtf = left_join(gtf, collapseds.tab %>% mutate(transcript_name=collapsed) %>% tidyr::separate_longer_delim(collapsed, delim="_") %>% distinct()) %>%
     mutate(collapsed = ifelse(is.na(collapsed),"none",collapsed))
 
   #writing

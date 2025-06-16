@@ -4,11 +4,10 @@
 	Downstream analysis of samples (default params)
 */
 
-
 process differential_isoform_usage{
 	tag "${objs}"
 	publishDir "${params.outputDir}/", overwrite: true, mode: 'copy'
-        label 'big_mem'
+    label 'big_rec'
 
 	input:
 		file(objs)
@@ -34,7 +33,7 @@ process differential_isoform_usage{
 process generation_filtered_bams{
     tag "${sampleID}"
     publishDir "${params.outputDir}/", overwrite: true, mode: 'copy'
-    label 'big_mem'
+    label 'big_rec'
 
     input:
         tuple val(sampleID), file(bams)

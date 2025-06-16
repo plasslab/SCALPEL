@@ -6,7 +6,7 @@ process probability_distribution {
 	tag "${sample_id}"
 	publishDir "${params.outputDir}/Runfiles/isoform_quantification/fragment_probabilities/${sample_id}", overwrite:'true'
 	cache true
-    label "probability_processing"
+    label "big_rec"
 
 	input:
         tuple val(sample_id), file(reads)
@@ -18,8 +18,8 @@ process probability_distribution {
 
 	script:
         """
-        cat *_unique.reads > all_unique.reads
-        Rscript ${baseDir}/src/compute_prob.R all_unique.reads ${gene_frac} ${binsz} ${sample_id}_probabilities.txt ${sample_id}_probabilities.pdf
+        cat *_unique.reads > all_unique_reads.txt
+        Rscript ${baseDir}/src/compute_prob.R all_unique_reads.txt ${gene_frac} ${binsz} ${sample_id}_probabilities.txt ${sample_id}_probabilities.pdf
         """
 }
 
@@ -29,7 +29,7 @@ process fragment_probabilities{
 	tag "${sample_id},${chr}"
 	publishDir "${params.outputDir}/Runfiles/isoform_quantification/fragment_probabilities/${sample_id}", overwrite: true, mode: 'copy'
 	cache true
-    label "big_mem"
+    label "big_rec"
 
 	input:
         tuple val(sample_id), val(chr), path(reads), path(probabilities)
@@ -47,7 +47,7 @@ process fragment_probabilities{
 
 process cells_splitting{
 	tag "${sample_id}"
-    label "big_mem"
+    label "small_rec"
 	cache true
 	
 	input:
@@ -66,7 +66,7 @@ process cells_splitting{
 process em_algorithm{
 	tag "${sample_id}, ${cell.baseName}"
 	cache true
-        label "em_algorithm"
+        label "small_rec"
 
 	input:
         tuple val(sample_id), path(cell)
@@ -85,7 +85,7 @@ process cells_merging{
 	tag "${sample_id}"
 	publishDir "${params.outputDir}/Runfiles/isoform_quantification/fragment_probabilities/${sample_id}", overwrite: true
 	cache true
-        label "big_mem"
+    label "big_rec"
 
 	input:
 	tuple val(sample_id), file(pred_cells)
@@ -106,7 +106,7 @@ process dge_generation{
 	tag "${sample_id}, ${isoforms}, ${raw_dge}"
 	publishDir "${params.outputDir}/", overwrite: true, mode: 'copy'
 	cache true
-        label "big_mem"
+    label "big_rec"
 
 	input:
 	tuple val(sample_id), path(isoforms), path(raw_dge)

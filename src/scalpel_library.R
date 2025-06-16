@@ -31,6 +31,7 @@ FindIsoforms <- function (seurat_obj, group_by, split_by = NULL, assay = "RNA",
             message("Performing filtering and comparison test...")
             all_results = pbapply::pblapply(split(counts.tab, counts.tab$gene_name), function(geneTab) {
                 #apply filtering checks & X2 test...
+                print(geneTab)
                 if(nrow(geneTab)>1){
                     return(Perform_xTest(geneTab, threshold_abund, threshold_var))
                 } else {
@@ -107,6 +108,7 @@ Extract_aggTab <- function (seurat_obj, group, assay) {
     
     tmp = data.table::data.table(dplyr::filter(tmp, gene_name %in% tmp.stats$gene_name))
     colnames(tmp) = c("gene.tr", "gene_name", "transcript_name", names.cols)
+    tmp = tmp %>% mutate(across(where(is.numeric), ~tidyr::replace_na(., 0)))
     return(tmp)
 }
 

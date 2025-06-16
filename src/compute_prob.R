@@ -1,4 +1,6 @@
 
+
+#libraries loading
 suppressMessages(suppressWarnings(library(scales)))
 suppressMessages(suppressWarnings(library(argparse)))
 suppressMessages(suppressWarnings(library(data.table)))
@@ -26,7 +28,8 @@ BINS = as.numeric(args$BINS)
 #1. Files Opening
 print("opening...")
 #get list of of unique read file
-reads = fread(args$PATH_OF_UNIQUE_TR, col.names=c("seqnames.rd","start.rd","end.rd","strand.rd","dist_END","frag.id","start","end","gene_name","transcript_name","bulk_TPMperc"), nThread = 1)
+reads = fread(args$PATH_OF_UNIQUE_TR, col.names=c("seqnames.rd","start.rd","end.rd","strand.rd","dist_END",
+  "frag.id","start","end","gene_name","transcript_name","bulk_TPMperc"), nThread = 1)
 
 #2. Processing
 print("processing...")

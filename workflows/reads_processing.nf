@@ -52,7 +52,7 @@ workflow samples_loading {
 process read_10x {
     tag "${sample_id}, ${repo}"
     cache true
-    label "samples_loading"
+    label "big_rec"
 
     input:
         tuple val(sample_id), path(repo)
@@ -69,10 +69,10 @@ process read_10x {
 
 
 process bam_splitting {
-    tag "${sample_id}, ${chr}, ${bc_path}"
+    tag "${sample_id}, ${chr}"
     publishDir "${params.outputDir}/Runfiles/reads_processing/bam_splitting/${sample_id}"
     cache true
-    label 'small_mem'
+    label 'small_rec'
 
     input: 
         tuple val(chr), val(sample_id), path(bam), path(bai), val(bc_path), path(dge_matrix)
@@ -135,7 +135,7 @@ process bedfile_conversion{
     tag "${sample_id}, ${chr}"
     publishDir "${params.outputDir}/Runfiles/reads_processing/bedfile_conversion/${sample_id}"
     cache true
-    label "small_mem"
+    label "small_rec"
 
     input:
         tuple val(sample_id), val(chr), path(bam)
@@ -153,8 +153,7 @@ process reads_mapping_and_filtering {
     tag "${sample_id}, ${chr}, ${bed}, ${exons}"
     publishDir "${params.outputDir}/Runfiles/reads_processing/mapping_filtering/${sample_id}"
     cache true
-    label "big_mem"
-    maxForks 20
+    label "small_rec"
 
     input:
         tuple val(sample_id), val(chr), path(bed), path(exons), path(exons_unique), path(collapsed)
@@ -172,7 +171,7 @@ process ip_splitting {
     tag "${chr}"
     publishDir "${params.outputDir}/Runfiles/internalp_filtering/ipdb_splitted"
     cache true
-    label "small_mem"
+    label "big_rec"
 
     input:
         tuple val(chr), path(ipref)
@@ -190,7 +189,7 @@ process ip_filtering {
     tag "${sample_id}, ${chr}, ${ipdb}"
     publishDir "${params.outputDir}/Runfiles/internalp_filtering/internalp_filtered/${sample_id}"
     cache true
-    label "big_mem"
+    label "big_rec"
 
     input:
         tuple val(sample_id), val(chr), path(reads), path(ipdb)

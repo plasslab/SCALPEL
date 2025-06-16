@@ -8,30 +8,6 @@ Barcelona, SPAIN
 =================================================================================================
 */
 
-// - Define SCALPEL default params variables
-//Annotation:
-params.transcriptome = null
-params.gtf = null
-params.ipdb = null
-
-//Reads:
-params.samplesheet = null
-params.sequencing = null
-params.barcodes = null
-params.clusters = null
-
-//Thresholds:
-params.dt_threshold = 600
-params.de_threshold = 30
-params.ip_threshold = 60
-params.gene_fraction = "98%"
-params.binsize = 20
-params.subsample = 1
-
-params.outputDir = "./results"
-params.help = null
-
-
 // In case of help...
 if( params.help )
     error( """\
@@ -70,10 +46,10 @@ if( params.help )
 
 
 // Check required args....
-if (!params.samplesheet) error("Missing --samplesheet")
-if (!params.transcriptome) error("Missing --transcriptome")
-if (!params.gtf) error("Missing --gtf")
-if (!params.ipdb) error("Missing --ipdb")
+if (!params.samplesheet) error("Missing --samplesheet [Provide a samplesheet file with path to the samples]")
+if (!params.transcriptome) error("Missing --transcriptome [Provide a transcriptome reference FASTA file]")
+if (!params.gtf) error("Missing --gtf [Provide a GTF annotation file]")
+if (!params.ipdb) error("Missing --ipdb [Provide a internal priming annotation reference file]")
 if (!params.sequencing) error("Missing --sequencing  [dropseq / chromium]")
 
 
@@ -195,7 +171,7 @@ workflow isoform_quantification {
     main:
         /* Calculate fragments transcriptomic probabilities */
         filtered_reads.flatMap{ it = [it[0,1,3]]}.set{ unique_reads }
-        unique_reads.map{ sample_id, chr, reads -> tuple( sample_id, [chr, reads]) }.groupTuple(by: 0).map{ sample_id, files -> tuple( sample_id, files.flatten() )}.set{ unique_reads }
+        unique_reads.map{ sample_id, chr, reads -> tuple( sample_id, [reads]) }.groupTuple(by: 0).map{ sample_id, files -> tuple( sample_id, files.flatten() )}.set{ unique_reads }
 
         /* calculate probabilities for each sample */
         probability_distribution(unique_reads, "${params.gene_fraction}", "${params.binsize}")

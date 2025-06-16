@@ -17,7 +17,7 @@ parser$add_argument('OUTPUT', type="character", help='path of output seurat file
 args = parser$parse_args()
 
 
-THR_ABUND = 0.10
+THR_ABUND = 0.05
 THR_PVAL = 0.05
 THR_VAR = 0.05
 
