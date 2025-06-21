@@ -35,7 +35,11 @@ workflow samples_loading {
 
         } else {
 
-            selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], it[3], it[4]) }).set{ samples_selects }
+            if( "${params.sequencing}" == "dropseq") {
+                selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], null, it[3]) }).set{ samples_selects }
+            } else {
+                selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], it[3], it[4]) }).set{ samples_selects }
+            }
 
         }
 
@@ -74,7 +78,7 @@ process bam_splitting {
     label 'small_rec'
 
     input: 
-        tuple val(chr), val(sample_id), path(bam), path(bai), val(bc_path), path(dge_matrix)
+        tuple val(chr), val(sample_id), path(bam), val(bai), val(bc_path), path(dge_matrix)
     output:
         tuple val(sample_id), val("${chr}"), path("${chr}.bam"), optional: true
     script:
@@ -82,6 +86,8 @@ process bam_splitting {
         if ( params.barcodes != null )
             """
             #Dropseq
+            #index input bam file
+            samtools index ${bam} -@ 4
             #Filter reads , Remove duuplicates and split by chromosome
             samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D XC:${bc_path} --keep-tag "XC,XM" | samtools sort > tmp.bam
             #Remove all PCR duplicates ...
@@ -97,6 +103,8 @@ process bam_splitting {
             """
         else
             """
+            #index input bam file
+            samtools index ${bam} -@ 4
             #Filter reads , Remove duuplicates and split by chromosome
             samtools view --subsample ${params.subsample} -b ${bam} ${chr} --keep-tag "XC,XM" | samtools sort > tmp.bam
             #Remove all PCR duplicates ...
