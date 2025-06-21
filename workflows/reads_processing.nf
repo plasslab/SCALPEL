@@ -20,8 +20,7 @@ workflow samples_loading {
             read_10x(samples_paths.map{ it=tuple(it[0], it[3]) }).set{ samples_selects}
 
         } else  {
-
-            samples_paths.map{ it = tuple( it[0], file(it[3]), file(it[4]), null, file(it[5]) ) }.set{ samples_selects }
+            samples_paths.map{ it = tuple( it[0], file(it[3]), null, file(it[4]) ) }.set{ samples_selects }
         }
 
         if (params.barcodes != null) {
