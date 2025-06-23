@@ -44,7 +44,7 @@ process tpm_counts_average{
     tag "${bulk_quants}"
     publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true
     cache true
-    label "small_rec"
+    label "big_rec"
 
     input:
         path bulk_quants
