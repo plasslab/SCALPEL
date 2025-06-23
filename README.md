@@ -12,7 +12,7 @@
 
 ### Prerequisite:
 
-**Nextflow v24.10.6** : [Official page](https://www.nextflow.io/docs/latest/install.html) / [CONDA](https://anaconda.org/bioconda/nextflow)
+**Nextflow>=v24.10.6** : [Official page](https://www.nextflow.io/docs/latest/install.html) / [CONDA](https://anaconda.org/bioconda/nextflow)
 
 
 SCALPEL can be installed and run using one of the following options:
