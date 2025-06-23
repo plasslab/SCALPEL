@@ -26,13 +26,13 @@ SCALPEL can be installed and run using one of the following options:
 
 2. Run SCALPEL using CONDA yml file
 ```bash
-> nextflow run -resume main.nf \
+> nextflow run -resume SCALPEL/main.nf \
   --sequencing chromium \
   --samplesheet path/to/samplesheet.csv \
   --transcriptome path/to/gencode.transcripts.fa \
   --gtf path/to/gencode.annotation.gtf \
   --ipdb path/to/mm10.polyA.track \
-  -with-conda requirements.yml
+  -with-conda SCALPEL/requirements.yml
 ```
 
 or create CONDA environment and activate
@@ -44,7 +44,7 @@ or create CONDA environment and activate
   --samplesheet path/to/samplesheet.csv \
   --transcriptome path/to/gencode.transcripts.fa \
   --gtf path/to/gencode.annotation.gtf \
-  --ipdb path/to/mm10.polyA.track \
+  --ipdb path/to/mm10.polyA.track
 ```
 
 ---
