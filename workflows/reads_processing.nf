@@ -66,7 +66,7 @@ process read_10x {
         Rscript ${baseDir}/src/read_10X.R ${repo}
         ln -s ${repo}/outs/possorted_genome_bam.bam ${sample_id}.bam
         ln -s ${repo}/outs/possorted_genome_bam.bam.bai ${sample_id}.bam.bai
-        zless ${repo}/outs/filtered_feature_bc_matrix/barcodes.tsv.gz > ${sample_id}.barcodes
+        zcat ${repo}/outs/filtered_feature_bc_matrix/barcodes.tsv.gz > ${sample_id}.barcodes
     """
 }
 
