@@ -12,7 +12,7 @@
 
 ### Prerequisite:
 
-**Nextflow v24.10.6** : [Official page](https://www.nextflow.io/docs/latest/install.html) / [CONDA](https://anaconda.org/bioconda/nextflow)
+**Nextflow>=v24.10.6** : [Official page](https://www.nextflow.io/docs/latest/install.html) / [CONDA](https://anaconda.org/bioconda/nextflow)
 
 
 SCALPEL can be installed and run using one of the following options:
@@ -21,26 +21,30 @@ SCALPEL can be installed and run using one of the following options:
 
 1. Clone the repository
 ```bash
-git clone https://github.com/p-CMRC-LAB/SCALPEL.git
-cd SCALPEL
+> git clone https://github.com/p-CMRC-LAB/SCALPEL.git
 ```
 
-2. Create the Conda environment
+2. Run SCALPEL using CONDA yml file
 ```bash
-conda env create -f requirements.yml
-conda activate scalpel_conda
-```
-
-3. Run SCALPEL within the environment
-```bash
-nextflow run -resume main.nf \
+> nextflow run -resume SCALPEL/main.nf \
   --sequencing chromium \
   --samplesheet path/to/samplesheet.csv \
   --transcriptome path/to/gencode.transcripts.fa \
   --gtf path/to/gencode.annotation.gtf \
   --ipdb path/to/mm10.polyA.track \
-  --barcodes path/to/barcodes.csv \
-  --clusters path/to/clusters.txt
+  -with-conda SCALPEL/requirements.yml
+```
+
+or create CONDA environment and activate
+```bash
+> conda env create --file SCALPEL/requirements.yml
+> conda activate scalpelEnv
+> nextflow run -resume main.nf \
+  --sequencing chromium \
+  --samplesheet path/to/samplesheet.csv \
+  --transcriptome path/to/gencode.transcripts.fa \
+  --gtf path/to/gencode.annotation.gtf \
+  --ipdb path/to/mm10.polyA.track
 ```
 
 ---
@@ -48,19 +52,18 @@ nextflow run -resume main.nf \
 ### Option 2: Using Apptainer container
 
 You can download a prebuilt Apptainer container with all SCALPEL dependencies from the following link:  
-[Download SCALPEL Container](https://data.cyverse.org/dav-anon/iplant/home/franzx5/SCALPEL.container.sif)
+[Download SCALPEL Container](https://zenodo.org/records/15717636/files/SCALPEL.container.sif?download=1)
 
 1. Download the container and clone the repository
 ```bash
 wget https://data.cyverse.org/dav-anon/iplant/home/franzx5/SCALPEL.container.sif
 git clone https://github.com/p-CMRC-LAB/SCALPEL.git
-cd SCALPEL
 ```
 
 2. Run SCALPEL using the container
 ```bash
-nextflow run /path/to/SCALPEL/main.nf \
-  -with-apptainer /path/to/scalpel_container.sif \
+nextflow run SCALPEL/main.nf \
+  -with-apptainer SCALPEL.container.sif \
   --sequencing chromium \
   --samplesheet path/to/samplesheet.csv \
   --transcriptome path/to/gencode.transcripts.fa \
@@ -81,8 +84,8 @@ nextflow run /path/to/SCALPEL/main.nf \
 | `--sequencing`   | Must be `chromium` or `dropseq`                                         |
 
 Reference files:
-- [Mouse IP Annotation - mm10](https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/databases/mm10_polya.track.tar.gz)
-- [Human IP Annotation - GRCh38](https://data.cyverse.org/dav-anon/iplant/home/franzx5/Scalpel_docs/databases/GRCh38_2020_A_polyA.track.tar.gz)
+- [Mouse IP Annotation - mm10](https://zenodo.org/records/15664563/files/mm10_polya.track.tar.gz?download=1)
+- [Human IP Annotation - GRCh38](https://zenodo.org/records/15717592/files/hg38_ipriming_sites.bed.tar.gz?download=1)
 - [GENCODE Annotations](https://www.gencodegenes.org/)
 
 ## Output Files and Execution Notes
@@ -160,8 +163,7 @@ Franz Ake, Sandra M. Fernández-Moya, Marcel Schilling, Akshay Jaya Ganesh, Ana 
 *bioRxiv* 2024.06.21.600022; [https://doi.org/10.1101/2024.06.21.600022](https://doi.org/10.1101/2024.06.21.600022)
 
 ## Contact
-
-Franz AKE – [@aerodx5](https://twitter.com/aerodx5) – fake@idibell.cat  
-GitHub: [https://github.com/plasslab/SCALPEL](https://github.com/plasslab/SCALPEL)
+Franz AKE – [@aerodx5](https://twitter.com/aerodx5) – franzarnold.ake@gmail.com  
+GitHub: [https://github.com/p-CMRC-LAB/SCALPEL](https://github.com/p-CMRC-LAB/SCALPEL)
 
 <p align="right"><a href="#top">Back to top</a></p>

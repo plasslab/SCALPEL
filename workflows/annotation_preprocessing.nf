@@ -44,7 +44,7 @@ process tpm_counts_average{
     tag "${bulk_quants}"
     publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true
     cache true
-    label "small_rec"
+    label "big_rec"
 
     input:
         path bulk_quants
@@ -70,7 +70,7 @@ process isoform_selection_weighting{
         val(dt_thr)
         val(de_thr)
     output:
-        tuple val("${gtf.baseName}"), path("${gtf.baseName}.exons"), path("${gtf.baseName}.exons_unique"), path("${gtf.baseName}_collapsed_isoforms.txt")
+        tuple val("${gtf.baseName}"), path("${gtf.baseName}.exons"), path("${gtf.baseName}.exons_unique"), path("${gtf.baseName}_collapsed_isoforms.txt"), optional: true
     script:
         """
         Rscript ${baseDir}/src/gtf_processing.R ${gtf} ${merged_quants} ${dt_thr} ${de_thr} ${gtf.baseName}.exons ${gtf.baseName}.exons_unique

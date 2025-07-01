@@ -20,8 +20,7 @@ workflow samples_loading {
             read_10x(samples_paths.map{ it=tuple(it[0], it[3]) }).set{ samples_selects}
 
         } else  {
-
-            samples_paths.map{ it = tuple( it[0], file(it[3]), file(it[4]), null, file(it[5]) ) }.set{ samples_selects }
+            samples_paths.map{ it = tuple( it[0], file(it[3]), null, file(it[4]) ) }.set{ samples_selects }
         }
 
         if (params.barcodes != null) {
@@ -36,7 +35,11 @@ workflow samples_loading {
 
         } else {
 
-            selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], it[3], it[4]) }).set{ samples_selects }
+            if( "${params.sequencing}" == "dropseq") {
+                selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], null, it[3]) }).set{ samples_selects }
+            } else {
+                selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], it[3], it[4]) }).set{ samples_selects }
+            }
 
         }
 
@@ -63,7 +66,7 @@ process read_10x {
         Rscript ${baseDir}/src/read_10X.R ${repo}
         ln -s ${repo}/outs/possorted_genome_bam.bam ${sample_id}.bam
         ln -s ${repo}/outs/possorted_genome_bam.bam.bai ${sample_id}.bam.bai
-        zcat ${repo}/outs/filtered_feature_bc_matrix/barcodes.tsv.gz > ${sample_id}.barcodes
+        zless ${repo}/outs/filtered_feature_bc_matrix/barcodes.tsv.gz > ${sample_id}.barcodes
     """
 }
 
@@ -75,7 +78,7 @@ process bam_splitting {
     label 'small_rec'
 
     input: 
-        tuple val(chr), val(sample_id), path(bam), path(bai), val(bc_path), path(dge_matrix)
+        tuple val(chr), val(sample_id), path(bam), val(bai), val(bc_path), path(dge_matrix)
     output:
         tuple val(sample_id), val("${chr}"), path("${chr}.bam"), optional: true
     script:
@@ -83,6 +86,8 @@ process bam_splitting {
         if ( params.barcodes != null )
             """
             #Dropseq
+            #index input bam file
+            samtools index ${bam} -@ 4
             #Filter reads , Remove duuplicates and split by chromosome
             samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D XC:${bc_path} --keep-tag "XC,XM" | samtools sort > tmp.bam
             #Remove all PCR duplicates ...
@@ -98,6 +103,8 @@ process bam_splitting {
             """
         else
             """
+            #index input bam file
+            samtools index ${bam} -@ 4
             #Filter reads , Remove duuplicates and split by chromosome
             samtools view --subsample ${params.subsample} -b ${bam} ${chr} --keep-tag "XC,XM" | samtools sort > tmp.bam
             #Remove all PCR duplicates ...
@@ -115,6 +122,8 @@ process bam_splitting {
     else
         """
         #Chromium_seq
+        #index input bam file
+        samtools index ${bam} -@ 4
         #Filter reads , Remove duuplicates and split by chromosome
         samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D CB:${bc_path} --keep-tag "CB,UB" | samtools sort > tmp.bam
         #Remove all PCR duplicates ...
