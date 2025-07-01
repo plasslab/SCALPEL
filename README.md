@@ -1,7 +1,7 @@
 # SCALPEL: A Nextflow-based Pipeline for Isoform Quantification at Single-Cell Resolution
 
 <div align="center">
-  <img src="https://data.cyverse.org/dav-anon/iplant/home/franzx5/SPERMATOGENESIS/SCALPEL_pipeline.png" alt="SCALPEL" width="800">
+  <img src="docs/SCALPEL_diagram.png" alt="SCALPEL" width="800">
 </div>
 
 ## About the Project
@@ -32,6 +32,7 @@ SCALPEL can be installed and run using one of the following options:
   --transcriptome path/to/gencode.transcripts.fa \
   --gtf path/to/gencode.annotation.gtf \
   --ipdb path/to/mm10.polyA.track \
+  --cpus 40 \
   -with-conda SCALPEL/requirements.yml
 ```
 
@@ -44,6 +45,7 @@ or create CONDA environment and activate
   --samplesheet path/to/samplesheet.csv \
   --transcriptome path/to/gencode.transcripts.fa \
   --gtf path/to/gencode.annotation.gtf \
+  --cpus 40 \
   --ipdb path/to/mm10.polyA.track
 ```
 
@@ -119,24 +121,48 @@ For downstream analysis tutorials, visit:
 
 ## Customizing Execution with `nextflow.config`
 
-To modify resource usage and process settings, edit the `nextflow.config` file. For example:
+To modify resource usage and process settings, optionally, you can edit the `nextflow.config` file. For example:
 
 ```groovy
-executor {
-    name = 'slurm'               // Use 'local', 'slurm', etc.
-    cpus = 64
-}
+/* Define Nextflow configuration settings for SCALPEL pipeline execution */
+/* ===================================================================== */
 
-process {
-    withLabel: big_mem {
-        cpus = 4
-        memory = '8 GB'
-    }
-    withLabel: small_mem {
-        cpus = 2
-        memory = '2 GB'
-    }
-    // Additional process-specific settings...
+/* -> Processes */
+
+/* Enter here the desired Nextflow parameters for execution (see https://www.nextflow.io/docs/latest/index.html)*/
+
+params {
+    // General parameters
+    workDir = './work'          // Directory for Nextflow work files
+    process.executor = 'local'  // Default executor, can be overridden in the executor block
+    process.queue = 'default'   // Default queue, can be overridden in the executor block
+
+    //=====1. Specific parameters for SCALPEL pipeline====
+    outputDir = "./results" // Directory for output files
+
+    // 1a. Reads:
+    samplesheet = null
+    sequencing = null
+    barcodes = null
+    clusters = null
+
+    // 1b. Annotation:
+    transcriptome = null
+    gtf = null
+    ipdb = null
+
+    // 1c. Thresholds:
+    dt_threshold = 600
+    de_threshold = 30
+    ip_threshold = 60
+    gene_fraction = "98%"
+    binsize = 20
+    subsample = 1
+    help = null
+
+    //=====2. Running parameters=====
+    params.cpus = 16           /* Adjust as needed */
+    params.memory = 40.GB     /* Adjust as needed */
 }
 ```
 
