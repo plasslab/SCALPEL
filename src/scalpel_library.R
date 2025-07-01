@@ -31,7 +31,6 @@ FindIsoforms <- function (seurat_obj, group_by, split_by = NULL, assay = "RNA",
             message("Performing filtering and comparison test...")
             all_results = pbapply::pblapply(split(counts.tab, counts.tab$gene_name), function(geneTab) {
                 #apply filtering checks & X2 test...
-                print(geneTab)
                 if(nrow(geneTab)>1){
                     return(Perform_xTest(geneTab, threshold_abund, threshold_var))
                 } else {
@@ -133,7 +132,7 @@ Perform_xTest <- function(tab, threshold.abund, threshold.var) {
     #perform X2 test
     if(nrow(numTab)>1){
         #perform test if more than 1 isoforms following filtering ops
-        chi2_res <- chisq.test(as.matrix(numTab))
+        chi2_res <- chisq.test(as.matrix(numTab)) %>% suppressWarnings()
         
         #check if X2 test condition are reunited (counts>=5)...
         if (all(round(chi2_res$expected,0) >= 5)) {
@@ -194,7 +193,7 @@ plot_relativeExp = function(seurat.obj, features_in, group.var, levels.group=NUL
 
 
 
-CoverPlot = function(genome_gr, gene_in, genome_sp, bamfiles, distZOOM=NULL, annot_tab=NULL,
+CoveragePlot = function(genome_gr, gene_in, genome_sp, bamfiles, distZOOM=NULL, annot_tab=NULL,
                      transcripts_in=NULL, filter_trs=F, samtools.bin="samtools"){
   #check args
   message(genome_sp)

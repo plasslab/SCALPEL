@@ -121,6 +121,7 @@ qf = fread(QF_PATH, col.names=c("gene_name","transcript_name", "bulk_TPMperc")) 
 if(nrow(qf)==0){
   
   warning(paste("Any bulk quantification found for the file ", GTF_PATH))
+  warning("Check coherency between GTF annotation and FASTA reference for the genome..")
 
 }else{
 

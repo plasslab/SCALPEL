@@ -122,6 +122,8 @@ process bam_splitting {
     else
         """
         #Chromium_seq
+        #index input bam file
+        samtools index ${bam} -@ 4
         #Filter reads , Remove duuplicates and split by chromosome
         samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D CB:${bc_path} --keep-tag "CB,UB" | samtools sort > tmp.bam
         #Remove all PCR duplicates ...
