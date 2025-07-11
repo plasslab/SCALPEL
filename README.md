@@ -184,9 +184,9 @@ Adjust `/path/to/SCALPEL` to the full absolute path where the SCALPEL repository
 
 ## Reference
 
-Franz Ake, Sandra M. Fernández-Moya, Marcel Schilling, Akshay Jaya Ganesh, Ana Gutiérrez-Franco, Lei Li, Mireya Plass  
+Franz Ake, Marcel Schilling, Sandra M. Fernández-Moya, Akshay Jaya Ganesh, Ana Gutiérrez-Franco, Lei Li, Mireya Plass  
 **Quantification of transcript isoforms at the single-cell level using SCALPEL**  
-*bioRxiv* 2024.06.21.600022; [https://doi.org/10.1101/2024.06.21.600022](https://doi.org/10.1101/2024.06.21.600022)
+*Nat Commun* 16, 6402 (2025). [doi://10.1038/s41467-025-61118-0](https://doi.org/10.1038/s41467-025-61118-0)
 
 ## Contact
 Franz AKE – [@aerodx5](https://twitter.com/aerodx5) – franzarnold.ake@gmail.com  
