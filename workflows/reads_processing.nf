@@ -27,6 +27,8 @@ workflow samples_loading {
             /* parse barcodes file */
             ( Channel.fromPath(params.barcodes) | splitCsv(header:false) ).set{ barcodes_paths }
             (samples_selects.join(barcodes_paths, by:[0])).set{ samples_selects }
+            samples_selects.map{ it = tuple(it[0], it[1], it[2], it[4], it[3]) }.set{ samples_selects }
+            samples_selects.view()
 
             if( "${params.sequencing}" == "chromium") {
                 samples_selects.map{ it = tuple(it[0], it[1], it[2], it[5], it[4]) }.set{ samples_selects }
@@ -42,6 +44,7 @@ workflow samples_loading {
             }
 
         }
+        samples_selects.view()
 
         /* processing of input BAM file... */
         bam_splitting( samples_selects )
@@ -72,7 +75,7 @@ process read_10x {
 
 
 process bam_splitting {
-    tag "${sample_id}, ${chr}"
+    tag "${sample_id}, ${chr}, ${bam}, ${bc_path}, ${dge_matrix}"
     publishDir "${params.outputDir}/Runfiles/reads_processing/bam_splitting/${sample_id}"
     cache true
     label 'small_rec'
