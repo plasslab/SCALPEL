@@ -28,7 +28,6 @@ workflow samples_loading {
             ( Channel.fromPath(params.barcodes) | splitCsv(header:false) ).set{ barcodes_paths }
             (samples_selects.join(barcodes_paths, by:[0])).set{ samples_selects }
             samples_selects.map{ it = tuple(it[0], it[1], it[2], it[4], it[3]) }.set{ samples_selects }
-            samples_selects.view()
 
             if( "${params.sequencing}" == "chromium") {
                 samples_selects.map{ it = tuple(it[0], it[1], it[2], it[5], it[4]) }.set{ samples_selects }
@@ -44,7 +43,6 @@ workflow samples_loading {
             }
 
         }
-        samples_selects.view()
 
         /* processing of input BAM file... */
         bam_splitting( samples_selects )
