@@ -13,7 +13,7 @@ dependencies:
   - r-base=4.3.3
   - r-data.table=1.15.4
   - r-dplyr=1.1.4
-  - r-ggplot2=3.5.1
+  - r-ggplot2=3.5.2
   - r-seurat=5.1.0
   - r-stringr=1.5.1
   - r-tibble=3.2.1

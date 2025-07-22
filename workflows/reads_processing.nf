@@ -73,13 +73,13 @@ process read_10x {
 
 
 process bam_splitting {
-    tag "${sample_id}, ${chr}, ${bam}, ${bc_path}, ${dge_matrix}"
+    tag "${sample_id}, ${chr}, ${bam}"
     publishDir "${params.outputDir}/Runfiles/reads_processing/bam_splitting/${sample_id}"
     cache true
     label 'small_rec'
 
     input: 
-        tuple val(chr), val(sample_id), path(bam), val(bai), val(bc_path), path(dge_matrix)
+        tuple val(chr), val(sample_id), val(bam), val(bai), val(bc_path), val(dge_matrix)
     output:
         tuple val(sample_id), val("${chr}"), path("${chr}.bam"), optional: true
     script:
@@ -88,7 +88,7 @@ process bam_splitting {
             """
             #Dropseq
             #index input bam file
-            samtools index ${bam} -@ 4
+            samtools index ${bam} -@ 4 -o ${bam}.bai
             #Filter reads , Remove duuplicates and split by chromosome
             samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D XC:${bc_path} --keep-tag "XC,XM" | samtools sort > tmp.bam
             #Remove all PCR duplicates ...
@@ -105,7 +105,7 @@ process bam_splitting {
         else
             """
             #index input bam file
-            samtools index ${bam} -@ 4
+            samtools index ${bam} -@ 4 -o ${bam}.bai
             #Filter reads , Remove duuplicates and split by chromosome
             samtools view --subsample ${params.subsample} -b ${bam} ${chr} --keep-tag "XC,XM" | samtools sort > tmp.bam
             #Remove all PCR duplicates ...
@@ -124,7 +124,7 @@ process bam_splitting {
         """
         #Chromium_seq
         #index input bam file
-        samtools index ${bam} -@ 4
+        samtools index ${bam} -@ 4 -o ${bam}.bai
         #Filter reads , Remove duuplicates and split by chromosome
         samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D CB:${bc_path} --keep-tag "CB,UB" | samtools sort > tmp.bam
         #Remove all PCR duplicates ...
