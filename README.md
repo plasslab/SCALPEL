@@ -190,6 +190,7 @@ Franz Ake, Marcel Schilling, Sandra M. Fernández-Moya, Akshay Jaya Ganesh, Ana 
 
 ## Contact
 Franz AKE – [@aerodx5](https://twitter.com/aerodx5) – franzarnold.ake@gmail.com  
-GitHub: [https://github.com/p-CMRC-LAB/SCALPEL](https://github.com/p-CMRC-LAB/SCALPEL)
+GitHub: [https://github.com/plasslab/SCALPEL](https://github.com/plasslab/SCALPEL)
+
 
 <p align="right"><a href="#top">Back to top</a></p>
