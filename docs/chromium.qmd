@@ -1,0 +1,218 @@
+---
+title: "SCALPEL application on 10x scRNA‐seq: mouse spermatogenesis"
+format:
+    html:
+        toc: true
+        toc-depth: 5
+        css: styles.css
+---
+
+author: Franz AKE \
+
+## Introduction
+
+<div style="text-align: center;">
+  <img src="./img/10x_Genomics_logo.svg.png" alt="10x Genomics Logo" width="100px"/>
+  <img src="./img/nextflow_logo.png" alt="Nextflow Logo" width="100px"/>
+</div>
+
+This vignette demonstrates how to run the SCALPEL nextflow to 10X Genomics single-cell RNA-seq data derived from mouse spermatogenesis, originally published by [Winterpacht A, Lukassen](https://pubmed.ncbi.nlm.nih.gov/30204153/) on Mouse spermatogenesis.
+
+The full dataset is publicly available on GEO at accession [GSE104556](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE104556).
+
+SCALPEL requires as input for the SAMPLES, the FASTQ files and the default CellRanger repository containing the indexed BAM file.
+For the purpose of this demonstration, we provide a subset of the original data:  [reduced_GSE104556](). This data contains a subset of the original data for running purpose.
+
+```{sh}
+> wget ...
+> tree -L 2  reduced_GSE104556
+reduced_GSE104556
+├── cellranger_samples
+│   ├── SRR6129050
+│   └── SRR6129051
+└── fastq_files
+    ├── SRR6129050_1000000_S1_L001_R1_001.fastq.gz
+    ├── SRR6129050_1000000_S1_L001_R2_001.fastq.gz
+    ├── SRR6129051_1000000_S1_L001_R1_001.fastq.gz
+    └── SRR6129051_1000000_S1_L001_R2_001.fastq.gz
+```
+
+SCALPEL requires for running a **GTF genome annotation**, **FASTA transcript annotation** and a **BED genome internal priming reference** file associated to your organism (Mouse or Human). For the current analysis, we use a reduced annotation reference from GENCODE for Mouse (GENCODE.vM21)
+
+- [reduced_GENCODE.vM21.annotation.gtf](https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.annotation.gtf.gz)
+- [GENCODE.vM21.transcript.fa](https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.transcripts.fa.gz)
+- [Mouse Internal priming site reference](https://zenodo.org/records/15664563/files/mm10_polya.track.tar.gz?download=1)
+
+```{sh}
+> wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.annotation.gtf.gz
+> wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.transcripts.fa.gz
+> wget -O mm10_polya.track.tar.gz https://zenodo.org/records/15664563/files/mm10_polya.track.tar.gz?download=1
+```
+
+Complete GTF genome annotation and FASTA transcripts annotation can be downloaded from [GENCODE](https://www.gencodegenes.org) or [ENSEMBL](https://www.ensembl.org/info/data/ftp/index.html).
+
+## SCALPEL running
+
+To run SCALPEL, you must provide a **samplesheet.csv** file, which specifies the input files for each sample. This file is required and passed to the pipeline using the `[--samplesheet]` argument.
+
+Each row in the `samplesheet.csv` should contain the following columns, in order, using **absolute paths** (starting from the root or project directory) for all files and directories:
+
+1. **Sample Name**: Sample name (...as used by CellRanger).
+2. **R1 FASTQ Path**: The absolute path to the R1 FASTQ file for the sample.
+3. **R2 FASTQ Path**: The absolute path to the R2 FASTQ file for the sample.
+4. **CellRanger Output Directory**: The absolute path to the CellRanger output directory for the sample (containing the indexed BAM file).
+
+Here, a `samplesheet.csv` for two samples would look like:
+
+
+```{sh}
+> cat samplesheet.csv
+SRR6129050,reduced_GSE104556/fastq_files/SRR6129050_1000000_S1_L001_R1_001.fastq.gz,reduced_GSE104556/fastq_files/SRR6129050_1000000_S1_L001_R2_001.fastq.gz,reduced_GSE104556/cellranger_samples/SRR6129050
+SRR6129051,reduced_GSE104556/fastq_files/SRR6129051_1000000_S1_L001_R1_001.fastq.gz,reduced_GSE104556/fastq_files/SRR6129051_1000000_S1_L001_R2_001.fastq.gz,reduced_GSE104556/cellranger_samples/SRR6129051
+```
+
+Optionally, you can provide a **whitelist_barcodes.csv** file specifying the curated barcode file path for each sample [--barcodes] argument. This allows SCALPEL to use custom barcode lists during processing. For the current analysis, we'll only use a subset of 100 barcodes for each sample, provided in the `reduced_GSE104556` directory:
+
+```{sh}
+> cat whitelist_barcodes.csv
+SRR6129050,reduced_GSE104556/SRR6129050_barcodes.txt
+SRR6129051,reduced_GSE104556/SRR6129051_barcodes.txt
+```
+
+### Execution
+
+To execute SCALPEL with the provided samplesheet and optional barcode whitelist, use the following command:
+
+```{sh}
+nextflow run -resume SCALPEL/main.nf \
+    --sequencing chromium \
+    --samplesheet samplesheet.csv \
+    --barcodes whitelist_barcodes.csv \
+    --outputDir scalpel_output \
+    --transcriptome GENCODE.vM21.transcripts.fa.gz \
+    --gtf reduced_GENCODE.vM21.annotation.gtf.gz \
+    --ipdb mm10_polya.track.tar.gz \
+    -with-conda SCALPEL/requirements.yml
+```
+
+::: {.callout-warning}
+Ensure that the GTF annotation file uses consistent chromosome naming conventions throughout your analysis. For example, some files may use 'chr1', 'chr2', ..., 'chrM', while others use '1', '2', ..., 'MT'. Mismatches in chromosome names between the GTF, and BAM files can lead to errors or missing data in downstream steps. Verify that all reference files (GTF, and any BAM files) use the same chromosome naming scheme, and convert them if necessary.
+:::
+
+### Results
+
+```{sh}
+> nextflow run -resume ~/Projects/SCALPEL/main.nf --sequencing chromium --samplesheet samplesheet.csv --barcodes whitelist_barcodes.txt --outputDir scalpel_output --transcriptome ~/Projects/SCALPEL/datas/gencode.vM21.transcripts.fa.gz --gtf ~/Projects/SCALPEL/datas/reduced_gencode.vM21.annotation.gtf.gz --ipdb ~/Projects/SCALPEL/datas/mm10_polya.track.tar.gz -with-conda ~/Projects/SCALPEL/requirements.yml 
+
+N E X T F L O W   ~  version 25.04.7
+
+WARN: It appears you have never run this project before -- Option `-resume` is ignored
+Launching `/Users/franz/Projects/SCALPEL/main.nf` [chaotic_hawking] DSL2 - revision: 007d8bbf88
+
+===============================
+SCALPEL - N F   P I P E L I N E
+===============================
+Author: PLASS Lab ; Franz AKE
+*****************
+P-CMRC - Barcelona, SPAIN
+
+input files:
+- Annotation required files(required):
+    - transcriptome reference [--transcriptome]: /Users/franz/Projects/SCALPEL/datas/gencode.vM21.transcripts.fa.gz
+    - annotation GTF reference [--gtf]: /Users/franz/Projects/SCALPEL/datas/reduced_gencode.vM21.annotation.gtf.gz
+    - internal priming annotation [--ipdb]: /Users/franz/Projects/SCALPEL/datas/mm10_polya.track.tar.gz
+
+- Reads processing files (required):
+    - samplesheet [--samplesheet]: samplesheet.csv
+
+- Params:
+    Required:
+    - sequencing type (required): chromium
+
+    Optional:
+    - barcodes whitelist [--barcodes] (optional): whitelist_barcodes.txt
+    - cell clusters annotation [--clusters] (optional): null
+    - transcriptomic distance threshold [--dt_threshold] (optional, default 600bp): 600
+    - transcriptomic end distance threshold [--de_threshold] (optional, default 30bp): 30
+    - minimal distance of internal priming sites (IP) from isoform 3'ends [--ip_threshold] (optional, 60nuc): 60
+    - gene fraction abundance threshold [--gene_fraction] (optional, default '98%'): 98%
+    - binsize threshold for transcriptomic distance based probability [--binsize] (optional, default '20): 20
+    - output directory for the Nextflow workflow [--outputDir] (optional, default './results'): scalpel_output
+    - reads subsampling threshold [--subsample] (optional, default 1): 1
+    - cpus [--cpus] (optional, default 16): 16
+
+[-        ] annotation_preprocessing:salmon_transcriptome_indexing -
+executor >  local (247)
+[b5/d945a1] annotation_preprocessing:salmon_transcriptome_indexing               | 1 of 1 ✔
+[b4/e697b5] ann…001_R1_001.fastq.gz, SRR6129051_1000000_S1_L001_R2_001.fastq.gz) | 2 of 2 ✔
+[40/31b244] ann…reprocessing:tpm_counts_average ([SRR6129050.sf, SRR6129051.sf]) | 1 of 1 ✔
+[b2/f5a828] ann…processing:isoform_selection_weighting (chr17, merge_quants.txt) | 4 of 4 ✔
+[53/f3f701] reads_processing:samples_loading:read_10x (SRR6129050, SRR6129050)   | 2 of 2 ✔
+[ac/22e71a] rea…ts/scalpel_wiki/datas/reduced_GSE104556/SRR6129050_barcodes.txt) | 8 of 8 ✔
+[a6/c44ae9] reads_processing:bedfile_conversion (SRR6129050, chr17)              | 4 of 4 ✔
+[b7/c23039] rea…apping_and_filtering (SRR6129051, chr17, chr17.bed, chr17.exons) | 4 of 4 ✔
+[23/8797b3] reads_processing:ip_splitting (chr17)                                | 2 of 2 ✔
+[cb/56b567] reads_processing:ip_filtering (SRR6129051, chr17, chr17_sp.ipdb)     | 4 of 4 ✔
+[09/bb5fd3] isoform_quantification:probability_distribution (SRR6129050)         | 2 of 2 ✔
+[4c/df7722] isoform_quantification:fragment_probabilities (SRR6129050,chr17)     | 4 of 4 ✔
+[5f/80b7c1] isoform_quantification:cells_splitting (SRR6129051)                  | 2 of 2 ✔
+[d9/a3277a] isoform_quantification:em_algorithm (SRR6129050, ACGATGTTCCTGCAGG-1) | 200 of 200 ✔
+[b6/993c12] isoform_quantification:cells_merging (SRR6129050)                    | 2 of 2 ✔
+[d4/b94365] iso…9050, SRR6129050_isoforms_quantified.txt, SRR6129050.counts.txt) | 2 of 2 ✔
+[8f/f9176e] apa…l_isoform_usage ([SRR6129051_seurat.RDS, SRR6129050_seurat.RDS]) | 1 of 1 ✔
+[e6/dc1559] apa_characterization:generation_filtered_bams (SRR6129050)           | 2 of 2 ✔
+
+Completed at: 20-May-2025 23:20:19
+Duration    : 14m 9s
+CPU hours   : 1.8
+Succeeded   : 247
+```
+
+Following the successful execution of SCALPEL, the output directory (`scalpel_output`) is generated containing the results and temporary run files as:
+
+- **iDGE_seurat.RDS**:\
+The Seurat object containing the isoform expression data (iDGE) for all samples. This object can be used for downstream analysis and visualization in R.
+
+- **DIU_table.csv**:\
+A table summarizing detected differential Isoform Usage (DIU) events across the samples by default.
+
+- **Runfiles**:\
+A directory containing all the temporary run files generated during the analysis.
+
+- **sampleXXX_seurat.RDS**:\
+The Seurat object for each individual sample containing isoform expression data (iDGE).
+
+- **sampleXXX_APADGE.txt**:\
+The isoform expression count data (iDGE) for each sample.
+
+- **sampleXXX_filtered.bam**:\
+The filtered BAM file for sample SRR6129050 (discarded duplicated_reads and internal_priming associated reads, only reads passing defaults SCALPEL filters).
+
+- **sampleXXX_filtered.bam.bai**:\
+The index file for the filtered BAM
+
+```{sh}
+> tree -L 1 scalpel_output
+scalpel_output
+├── DIU_table.csv
+├── iDGE_seurat.RDS
+├── Runfiles
+├── SRR6129050_APADGE.txt
+├── SRR6129050_filtered.bam
+├── SRR6129050_filtered.bam.bai
+├── SRR6129050_seurat.RDS
+├── SRR6129051_APADGE.txt
+├── SRR6129051_filtered.bam
+├── SRR6129051_filtered.bam.bai
+└── SRR6129051_seurat.RDS
+
+2 directories, 10 files
+```
+
+
+## Downstream analysis
+
+For more information, refer to [SCALPEL_downstream_analysis.qmd](SCALPEL_downstream_analysis.qmd) for downstream analysis of the SCALPEL output files.
+
+
+email: <a href="mailto:aerod7710@gmail.com"> fake@idibell.cat </a>
