@@ -1,0 +1,12 @@
+pre {
+  color: black;
+  background-color: #dbcdab;
+  font-size: 9pt;
+}
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  padding: 10px;
+  font-size: 12pt;
+}
