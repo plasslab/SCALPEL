@@ -1,2 +1,4 @@
 datas/chromium/reduced_GSE104556.tar.gz filter=lfs diff=lfs merge=lfs -text
 datas/dropseq/reduced_GSE268222.tar.gz filter=lfs diff=lfs merge=lfs -text
+datas/reduced_GENCODE.v41.annotation.gtf.gz filter=lfs diff=lfs merge=lfs -text
+datas/reduced_GENCODE.vM21.annotation.gtf.gz filter=lfs diff=lfs merge=lfs -text

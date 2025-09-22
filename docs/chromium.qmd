@@ -21,10 +21,10 @@ This vignette demonstrates how to run the SCALPEL nextflow to 10X Genomics singl
 The full dataset is publicly available on GEO at accession [GSE104556](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE104556).
 
 SCALPEL requires as input for the SAMPLES, the FASTQ files and the default CellRanger repository containing the indexed BAM file.
-For the purpose of this demonstration, we provide a subset of the original data:  [reduced_GSE104556](). This data contains a subset of the original data for running purpose.
+For the purpose of this demonstration, we provide a subset of the original data:  [reduced_GSE104556](https://github.com/plasslab/SCALPEL/blob/dev/datas/chromium/reduced_GSE104556.tar.gz). This data contains a subset of the original data for running purpose.
 
 ```{sh}
-> wget ...
+> wget https://github.com/plasslab/SCALPEL/blob/dev/datas/chromium/reduced_GSE104556.tar.gz
 > tree -L 2  reduced_GSE104556
 reduced_GSE104556
 ├── cellranger_samples
@@ -212,7 +212,7 @@ scalpel_output
 
 ## Downstream analysis
 
-For more information, refer to [SCALPEL_downstream_analysis.qmd](SCALPEL_downstream_analysis.qmd) for downstream analysis of the SCALPEL output files.
+For more information, refer to [SCALPEL_downstream_analysis.qmd](https://github.com/p-CMRC-LAB/SCALPEL/wiki) for downstream analysis of the SCALPEL output files.
 
 
 email: <a href="mailto:aerod7710@gmail.com"> fake@idibell.cat </a>
