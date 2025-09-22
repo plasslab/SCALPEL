@@ -12,13 +12,9 @@ workflow samples_loading {
         selected_isoforms
 
     main:
-
         /* - In case of 10X file type, extract required files... */
         if ( "${params.sequencing}" == "chromium" ) {
-
-            // extract sampleIDs and associated paths */
             read_10x(samples_paths.map{ it=tuple(it[0], it[3]) }).set{ samples_selects}
-
         } else  {
             samples_paths.map{ it = tuple( it[0], file(it[3]), null, file(it[4]) ) }.set{ samples_selects }
         }
@@ -27,29 +23,29 @@ workflow samples_loading {
             /* parse barcodes file */
             ( Channel.fromPath(params.barcodes) | splitCsv(header:false) ).set{ barcodes_paths }
             (samples_selects.join(barcodes_paths, by:[0])).set{ samples_selects }
-            samples_selects.map{ it = tuple(it[0], it[1], it[2], it[4], it[3]) }.set{ samples_selects }
 
-            if( "${params.sequencing}" == "chromium") {
+            if(params.sequencing == "chromium"){
                 samples_selects.map{ it = tuple(it[0], it[1], it[2], it[5], it[4]) }.set{ samples_selects }
             }
+            
+            if(params.sequencing == "dropseq") {
+                samples_selects.map{ it = tuple(it[0], it[1], it[2], it[4], it[3]) }.set{ samples_selects }
+            }
+
             selected_isoforms.flatMap { it = it[0] }.combine(samples_selects).set{ samples_selects }
-
         } else {
-
             if( "${params.sequencing}" == "dropseq") {
                 selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], null, it[3]) }).set{ samples_selects }
             } else {
                 selected_isoforms.flatMap { it = it[0] }.combine(samples_selects.map{ it = tuple(it[0], it[1], it[2], it[3], it[4]) }).set{ samples_selects }
             }
-
         }
-
         /* processing of input BAM file... */
         bam_splitting( samples_selects )
-
-    emit:
-        selected_bams = bam_splitting.out
-        sample_files = samples_selects
+        
+        emit:
+            selected_bams = bam_splitting.out
+            sample_files = samples_selects
 }
 
 
@@ -67,13 +63,13 @@ process read_10x {
         Rscript ${baseDir}/src/read_10X.R ${repo}
         ln -s ${repo}/outs/possorted_genome_bam.bam ${sample_id}.bam
         ln -s ${repo}/outs/possorted_genome_bam.bam.bai ${sample_id}.bam.bai
-        zcat ${repo}/outs/filtered_feature_bc_matrix/barcodes.tsv.gz > ${sample_id}.barcodes
+        gunzip -c ${repo}/outs/filtered_feature_bc_matrix/barcodes.tsv.gz > ${sample_id}.barcodes
     """
 }
 
 
 process bam_splitting {
-    tag "${sample_id}, ${chr}, ${bam}"
+    tag "${sample_id}, ${chr}"
     publishDir "${params.outputDir}/Runfiles/reads_processing/bam_splitting/${sample_id}"
     cache true
     label 'small_rec'
@@ -88,29 +84,32 @@ process bam_splitting {
             """
             #Dropseq
             #index input bam file
-            samtools index ${bam} -@ 4 -o ${bam}.bai
-            #Filter reads , Remove duuplicates and split by chromosome
-            samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D XC:${bc_path} --keep-tag "XC,XM" | samtools sort > tmp.bam
+            samtools index ${bam} -@ 4 -o ./${bam.baseName}.bai
+            #Filter reads , Remove duplicates and split by chromosome
+            samtools view --subsample ${params.subsample} -b ${bam} -X ${bam.baseName}.bai ${chr} -D XC:${bc_path} --keep-tag "XC,XM" | samtools sort > tmp.bam
             #Remove all PCR duplicates ...
             samtools markdup tmp.bam ${chr}.bam -r --barcode-tag XC --barcode-tag XM
             rm tmp.bam
+            rm ./${bam.baseName}.bai
              #check if empty bam file... if yes discard from the analysis
             samtools view ${chr}.bam | head -1 > check
             if [ -s check ]; then 
                 echo "ok" 
-            else 
+            else
+                echo "empty Dropseq BAM files..."
                 rm -f ${chr}.bam
             fi
             """
         else
             """
             #index input bam file
-            samtools index ${bam} -@ 4 -o ${bam}.bai
-            #Filter reads , Remove duuplicates and split by chromosome
-            samtools view --subsample ${params.subsample} -b ${bam} ${chr} --keep-tag "XC,XM" | samtools sort > tmp.bam
+            samtools index ${bam} -@ 4 -o ./${bam.baseName}.bai
+            #Filter reads , Remove duplicates and split by chromosome
+            samtools view --subsample ${params.subsample} -b ${bam} -X ${bam.baseName}.bai ${chr} --keep-tag "XC,XM" | samtools sort > tmp.bam
             #Remove all PCR duplicates ...
             samtools markdup tmp.bam ${chr}.bam -r --barcode-tag XC --barcode-tag XM
             rm tmp.bam
+            rm ./${bam.baseName}.bai
              #check if empty bam file... if yes discard from the analysis
             samtools view ${chr}.bam | head -1 > check
             if [ -s check ]; then 
@@ -124,9 +123,9 @@ process bam_splitting {
         """
         #Chromium_seq
         #index input bam file
-        samtools index ${bam} -@ 4 -o ${bam}.bai
-        #Filter reads , Remove duuplicates and split by chromosome
-        samtools view --subsample ${params.subsample} -b ${bam} ${chr} -D CB:${bc_path} --keep-tag "CB,UB" | samtools sort > tmp.bam
+        samtools index ${bam} -@ 4 -o ./${bam.baseName}.bai
+        #Filter reads , Remove duplicates and split by chromosome
+        samtools view --subsample ${params.subsample} -b ${bam} -X ${bam.baseName}.bai ${chr} -D CB:${bc_path} --keep-tag "CB,UB" | samtools sort > tmp.bam
         #Remove all PCR duplicates ...
         samtools markdup tmp.bam ${chr}.bam -r --barcode-tag CB --barcode-tag UB
         rm tmp.bam
@@ -153,14 +152,14 @@ process bedfile_conversion{
         tuple val(sample_id), val(chr), path("${chr}.bed")
     script:
     """
-        #Convertion of bam files to bed files
-        bam2bed --all-reads --split --do-not-sort < ${bam} | gawk -v OFS="\\t" '{print \$1,\$2,\$3,\$6,\$4,\$14"::"\$15}' > ${chr}.bed
+    #Convertion of bam files to bed files
+    bam2bed --all-reads --split --do-not-sort < ${bam} | gawk -v OFS="\\t" '{print \$1,\$2,\$3,\$6,\$4,\$14"::"\$15}' > ${chr}.bed
     """
 }
 
 
 process reads_mapping_and_filtering {
-    tag "${sample_id}, ${chr}, ${bed}, ${exons}"
+    tag "${sample_id}, ${chr}"
     publishDir "${params.outputDir}/Runfiles/reads_processing/mapping_filtering/${sample_id}"
     cache true
     label "small_rec"
@@ -171,8 +170,8 @@ process reads_mapping_and_filtering {
         tuple val(sample_id), val(chr), path("${chr}.reads"), path("${sample_id}_${chr}_read_distrib.txt")
     script:
     """
-        Rscript ${baseDir}/src/mapping_filtering.R ${bed} ${exons} ${chr}.reads
-        mv read_distance_distribution_on_transcriptomic_scope.txt ${sample_id}_${chr}_read_distrib.txt
+    Rscript ${baseDir}/src/mapping_filtering.R ${bed} ${exons} ${chr}.reads
+    mv read_distance_distribution_on_transcriptomic_scope.txt ${sample_id}_${chr}_read_distrib.txt
     """
 }
 
@@ -196,7 +195,7 @@ process ip_splitting {
 
 
 process ip_filtering {
-    tag "${sample_id}, ${chr}, ${ipdb}"
+    tag "${sample_id}, ${chr}"
     publishDir "${params.outputDir}/Runfiles/internalp_filtering/internalp_filtered/${sample_id}"
     cache true
     label "big_rec"
@@ -207,8 +206,8 @@ process ip_filtering {
     output:
         tuple val(sample_id), val(chr), path("${chr}_mapped.ipdb"), path("${chr}_unique.reads"), path("${chr}.readid"), path("${chr}_ipf.reads")
     script:
-        """
-        #filtering
-        Rscript ${baseDir}/src/ip_filtering.R ${reads} ${ipdb} ${ip_thr} ${chr}.readid ${chr}_unique.reads ${chr}_mapped.ipdb ${chr}_ipf.reads
-        """
+    """
+    #filtering
+    Rscript ${baseDir}/src/ip_filtering.R ${reads} ${ipdb} ${ip_thr} ${chr}.readid ${chr}_unique.reads ${chr}_mapped.ipdb ${chr}_ipf.reads
+    """
 }

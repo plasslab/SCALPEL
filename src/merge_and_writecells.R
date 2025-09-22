@@ -15,7 +15,7 @@ args = parser$parse_args()
 all_files = list.files(args$frags_path, pattern = "*_frag.reads", full.names = T)
 
 #run awk on each of those files
-command.awk = lapply(all_files, function(x) paste0("awk '{print >> $1\".cell\"}' ", x)) %>% unlist()
+command.awk = lapply(all_files, function(x) paste0("gawk '{print >> $1\".cell\"}' ", x)) %>% unlist()
 res = lapply(command.awk, function(x){
   system(x)
 })

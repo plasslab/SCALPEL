@@ -22,7 +22,7 @@ process salmon_transcriptome_indexing {
 
 
 process salmon_bulk_quantification{
-    tag "${pair_id}, ${fastq1}, ${fastq2}"
+    tag "${pair_id}"
     publishDir "${params.outputDir}/Runfiles/annotation_processing/salmon_bulk_quantification", overwrite: true
     cache true
     label 'big_rec'
