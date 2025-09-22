@@ -96,11 +96,15 @@ reduced_GSE104556
 ├── cellranger_samples
 │   ├── SRR6129050
 │   └── SRR6129051
-└── fastq_files
-    ├── SRR6129050_1000000_S1_L001_R1_001.fastq.gz
-    ├── SRR6129050_1000000_S1_L001_R2_001.fastq.gz
-    ├── SRR6129051_1000000_S1_L001_R1_001.fastq.gz
-    └── SRR6129051_1000000_S1_L001_R2_001.fastq.gz</code></pre>
+├── fastq_files
+│   ├── SRR6129050_1000000_S1_L001_R1_001.fastq.gz
+│   ├── SRR6129050_1000000_S1_L001_R2_001.fastq.gz
+│   ├── SRR6129051_1000000_S1_L001_R1_001.fastq.gz
+│   └── SRR6129051_1000000_S1_L001_R2_001.fastq.gz
+├── SRR6129050_barcodes.txt
+└── SRR6129051_barcodes.txt
+
+5 directories, 6 files</code></pre>
 <p>SCALPEL requires for running a <strong>GTF genome annotation</strong>, <strong>FASTA transcript annotation</strong> and a <strong>BED genome internal priming reference</strong> file associated to your organism (Mouse or Human). For the current analysis, we use a reduced annotation reference from GENCODE for Mouse (GENCODE.vM21).</p>
 <ul>
 <li><a href="https://zenodo.org/records/17176838/files/reduced_GENCODE.vM21.annotation.gtf.gz?download=1">reduced_GENCODE.vM21.annotation.gtf</a></li>
@@ -120,12 +124,25 @@ reduced_GSE104556
 <li><strong>Sample Name</strong>: Sample name (…as used by CellRanger).</li>
 <li><strong>R1 FASTQ Path</strong>: The absolute path to the R1 FASTQ file for the sample.</li>
 <li><strong>R2 FASTQ Path</strong>: The absolute path to the R2 FASTQ file for the sample.</li>
-<li><strong>CellRanger Output Directory</strong>: The absolute path to the CellRanger output directory for the sample (containing the indexed BAM file).</li>
+<li><strong>CellRanger Output Directory Path</strong>: The absolute path to the CellRanger output directory for the sample (containing the indexed BAM file).</li>
 </ol>
 <p>Here, a <code>samplesheet.csv</code> for two samples would look like:</p>
 <pre class="{sh}"><code>&gt; cat samplesheet.csv
 SRR6129050,reduced_GSE104556/fastq_files/SRR6129050_1000000_S1_L001_R1_001.fastq.gz,reduced_GSE104556/fastq_files/SRR6129050_1000000_S1_L001_R2_001.fastq.gz,reduced_GSE104556/cellranger_samples/SRR6129050
 SRR6129051,reduced_GSE104556/fastq_files/SRR6129051_1000000_S1_L001_R1_001.fastq.gz,reduced_GSE104556/fastq_files/SRR6129051_1000000_S1_L001_R2_001.fastq.gz,reduced_GSE104556/cellranger_samples/SRR6129051</code></pre>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Use absolute paths for all files and directories in the <code>samplesheet.csv</code> to avoid path resolution issues during pipeline execution.</p>
+</div>
+</div>
 <p>Optionally, you can provide a <strong>whitelist_barcodes.csv</strong> file specifying the curated barcode file path for each sample [–barcodes] argument. This allows SCALPEL to use custom barcode lists during processing. For the current analysis, we’ll only use a subset of 100 barcodes for each sample, provided in the <code>reduced_GSE104556</code> directory:</p>
 <pre class="{sh}"><code>&gt; cat whitelist_barcodes.csv
 SRR6129050,reduced_GSE104556/SRR6129050_barcodes.txt
@@ -141,7 +158,8 @@ SRR6129051,reduced_GSE104556/SRR6129051_barcodes.txt</code></pre>
     --transcriptome GENCODE.vM21.transcripts.fa.gz \
     --gtf reduced_GENCODE.vM21.annotation.gtf.gz \
     --ipdb mm10_polya.track.tar.gz \
-    -with-conda SCALPEL/requirements.yml</code></pre>
+    -with-conda SCALPEL/requirements.yml
+    --cpus 32</code></pre>
 <div class="callout callout-style-default callout-warning callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">

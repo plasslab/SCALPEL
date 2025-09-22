@@ -31,11 +31,15 @@ reduced_GSE104556
 ├── cellranger_samples
 │   ├── SRR6129050
 │   └── SRR6129051
-└── fastq_files
-    ├── SRR6129050_1000000_S1_L001_R1_001.fastq.gz
-    ├── SRR6129050_1000000_S1_L001_R2_001.fastq.gz
-    ├── SRR6129051_1000000_S1_L001_R1_001.fastq.gz
-    └── SRR6129051_1000000_S1_L001_R2_001.fastq.gz
+├── fastq_files
+│   ├── SRR6129050_1000000_S1_L001_R1_001.fastq.gz
+│   ├── SRR6129050_1000000_S1_L001_R2_001.fastq.gz
+│   ├── SRR6129051_1000000_S1_L001_R1_001.fastq.gz
+│   └── SRR6129051_1000000_S1_L001_R2_001.fastq.gz
+├── SRR6129050_barcodes.txt
+└── SRR6129051_barcodes.txt
+
+5 directories, 6 files
 ```
 
 SCALPEL requires for running a **GTF genome annotation**, **FASTA transcript annotation** and a **BED genome internal priming reference** file associated to your organism (Mouse or Human). For the current analysis, we use a reduced annotation reference from GENCODE for Mouse (GENCODE.vM21).
@@ -61,7 +65,7 @@ Each row in the `samplesheet.csv` should contain the following columns, in order
 1. **Sample Name**: Sample name (...as used by CellRanger).
 2. **R1 FASTQ Path**: The absolute path to the R1 FASTQ file for the sample.
 3. **R2 FASTQ Path**: The absolute path to the R2 FASTQ file for the sample.
-4. **CellRanger Output Directory**: The absolute path to the CellRanger output directory for the sample (containing the indexed BAM file).
+4. **CellRanger Output Directory Path**: The absolute path to the CellRanger output directory for the sample (containing the indexed BAM file).
 
 Here, a `samplesheet.csv` for two samples would look like:
 
@@ -71,6 +75,10 @@ Here, a `samplesheet.csv` for two samples would look like:
 SRR6129050,reduced_GSE104556/fastq_files/SRR6129050_1000000_S1_L001_R1_001.fastq.gz,reduced_GSE104556/fastq_files/SRR6129050_1000000_S1_L001_R2_001.fastq.gz,reduced_GSE104556/cellranger_samples/SRR6129050
 SRR6129051,reduced_GSE104556/fastq_files/SRR6129051_1000000_S1_L001_R1_001.fastq.gz,reduced_GSE104556/fastq_files/SRR6129051_1000000_S1_L001_R2_001.fastq.gz,reduced_GSE104556/cellranger_samples/SRR6129051
 ```
+
+::: {.callout-warning}
+Use absolute paths for all files and directories in the `samplesheet.csv` to avoid path resolution issues during pipeline execution.
+:::
 
 Optionally, you can provide a **whitelist_barcodes.csv** file specifying the curated barcode file path for each sample [--barcodes] argument. This allows SCALPEL to use custom barcode lists during processing. For the current analysis, we'll only use a subset of 100 barcodes for each sample, provided in the `reduced_GSE104556` directory:
 
@@ -94,6 +102,7 @@ nextflow run -resume SCALPEL/main.nf \
     --gtf reduced_GENCODE.vM21.annotation.gtf.gz \
     --ipdb mm10_polya.track.tar.gz \
     -with-conda SCALPEL/requirements.yml
+    --cpus 32
 ```
 
 ::: {.callout-warning}
