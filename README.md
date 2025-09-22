@@ -113,8 +113,8 @@ After execution, SCALPEL generates a `results/` directory containing key outputs
 - `*_APADGE.txt` matrices are compatible with other statistical environments.
 
 For downstream analysis tutorials, visit:
-- [Example of SCALPEL application on 10X scRNA-seq](https://github.com/p-CMRC-LAB/SCALPEL/wiki/SCALPEL-application-on-10X-scRNA%E2%80%90seq)
-- [Example of SCALPEL application on DropSeq scRNA-seq](https://github.com/p-CMRC-LAB/SCALPEL/wiki/SCALPEL-application-on-DropSeq-scRNA%E2%80%90seq)
+- [Example of SCALPEL application on 10X scRNA-seq](https://raw.githack.com/plasslab/SCALPEL/refs/heads/dev/docs/chromium.html)
+- [Example of SCALPEL application on DropSeq scRNA-seq](https://raw.githack.com/plasslab/SCALPEL/refs/heads/dev/docs/dropseq.html)
 - [Downstream analysis Wiki](https://github.com/p-CMRC-LAB/SCALPEL/wiki)
 
 ---
