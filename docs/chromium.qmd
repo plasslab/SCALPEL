@@ -21,10 +21,11 @@ This vignette demonstrates how to run the SCALPEL nextflow to 10X Genomics singl
 The full dataset is publicly available on GEO at accession [GSE104556](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE104556).
 
 SCALPEL requires as input for the SAMPLES, the FASTQ files and the default CellRanger repository containing the indexed BAM file.
-For the purpose of this demonstration, we provide a subset of the original data:  [reduced_GSE104556](https://github.com/plasslab/SCALPEL/blob/dev/datas/chromium/reduced_GSE104556.tar.gz). This data contains a subset of the original data for running purpose.
+For the purpose of this demonstration, we provide a subset of the original data:  [reduced_GSE104556](https://zenodo.org/records/17176865/files/reduced_GSE104556.tar.gz?download=1). This data contains a subset of the original data for running purpose.
 
 ```{sh}
-> wget https://github.com/plasslab/SCALPEL/blob/dev/datas/chromium/reduced_GSE104556.tar.gz
+> wget -O reduced_GSE104556.tar.gz https://zenodo.org/records/17176865/files/reduced_GSE104556.tar.gz?download=1
+> tar -xvf reduced_GSE104556.tar.gz
 > tree -L 2  reduced_GSE104556
 reduced_GSE104556
 ├── cellranger_samples
@@ -37,14 +38,14 @@ reduced_GSE104556
     └── SRR6129051_1000000_S1_L001_R2_001.fastq.gz
 ```
 
-SCALPEL requires for running a **GTF genome annotation**, **FASTA transcript annotation** and a **BED genome internal priming reference** file associated to your organism (Mouse or Human). For the current analysis, we use a reduced annotation reference from GENCODE for Mouse (GENCODE.vM21)
+SCALPEL requires for running a **GTF genome annotation**, **FASTA transcript annotation** and a **BED genome internal priming reference** file associated to your organism (Mouse or Human). For the current analysis, we use a reduced annotation reference from GENCODE for Mouse (GENCODE.vM21).
 
-- [reduced_GENCODE.vM21.annotation.gtf](https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.annotation.gtf.gz)
+- [reduced_GENCODE.vM21.annotation.gtf](https://zenodo.org/records/17176838/files/reduced_GENCODE.vM21.annotation.gtf.gz?download=1)
 - [GENCODE.vM21.transcript.fa](https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.transcripts.fa.gz)
 - [Mouse Internal priming site reference](https://zenodo.org/records/15664563/files/mm10_polya.track.tar.gz?download=1)
 
 ```{sh}
-> wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.annotation.gtf.gz
+> wget -O reduced_GENCODE.vM21.annotation.gtf.gz https://zenodo.org/records/17176838/files/reduced_GENCODE.vM21.annotation.gtf.gz?download=1
 > wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.transcripts.fa.gz
 > wget -O mm10_polya.track.tar.gz https://zenodo.org/records/15664563/files/mm10_polya.track.tar.gz?download=1
 ```

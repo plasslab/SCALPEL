@@ -88,8 +88,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <p>This vignette demonstrates how to run the SCALPEL nextflow to 10X Genomics single-cell RNA-seq data derived from mouse spermatogenesis, originally published by <a href="https://pubmed.ncbi.nlm.nih.gov/30204153/">Winterpacht A, Lukassen</a> on Mouse spermatogenesis.</p>
 <p>The full dataset is publicly available on GEO at accession <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE104556">GSE104556</a>.</p>
-<p>SCALPEL requires as input for the SAMPLES, the FASTQ files and the default CellRanger repository containing the indexed BAM file. For the purpose of this demonstration, we provide a subset of the original data: <a href="https://github.com/plasslab/SCALPEL/blob/dev/datas/chromium/reduced_GSE104556.tar.gz">reduced_GSE104556</a>. This data contains a subset of the original data for running purpose.</p>
-<pre class="{sh}"><code>&gt; wget https://github.com/plasslab/SCALPEL/blob/dev/datas/chromium/reduced_GSE104556.tar.gz
+<p>SCALPEL requires as input for the SAMPLES, the FASTQ files and the default CellRanger repository containing the indexed BAM file. For the purpose of this demonstration, we provide a subset of the original data: <a href="https://zenodo.org/records/17176865/files/reduced_GSE104556.tar.gz?download=1">reduced_GSE104556</a>. This data contains a subset of the original data for running purpose.</p>
+<pre class="{sh}"><code>&gt; wget -O reduced_GSE104556.tar.gz https://zenodo.org/records/17176865/files/reduced_GSE104556.tar.gz?download=1
+&gt; tar -xvf reduced_GSE104556.tar.gz
 &gt; tree -L 2  reduced_GSE104556
 reduced_GSE104556
 ├── cellranger_samples
@@ -100,13 +101,13 @@ reduced_GSE104556
     ├── SRR6129050_1000000_S1_L001_R2_001.fastq.gz
     ├── SRR6129051_1000000_S1_L001_R1_001.fastq.gz
     └── SRR6129051_1000000_S1_L001_R2_001.fastq.gz</code></pre>
-<p>SCALPEL requires for running a <strong>GTF genome annotation</strong>, <strong>FASTA transcript annotation</strong> and a <strong>BED genome internal priming reference</strong> file associated to your organism (Mouse or Human). For the current analysis, we use a reduced annotation reference from GENCODE for Mouse (GENCODE.vM21)</p>
+<p>SCALPEL requires for running a <strong>GTF genome annotation</strong>, <strong>FASTA transcript annotation</strong> and a <strong>BED genome internal priming reference</strong> file associated to your organism (Mouse or Human). For the current analysis, we use a reduced annotation reference from GENCODE for Mouse (GENCODE.vM21).</p>
 <ul>
-<li><a href="https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.annotation.gtf.gz">reduced_GENCODE.vM21.annotation.gtf</a></li>
+<li><a href="https://zenodo.org/records/17176838/files/reduced_GENCODE.vM21.annotation.gtf.gz?download=1">reduced_GENCODE.vM21.annotation.gtf</a></li>
 <li><a href="https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.transcripts.fa.gz">GENCODE.vM21.transcript.fa</a></li>
 <li><a href="https://zenodo.org/records/15664563/files/mm10_polya.track.tar.gz?download=1">Mouse Internal priming site reference</a></li>
 </ul>
-<pre class="{sh}"><code>&gt; wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.annotation.gtf.gz
+<pre class="{sh}"><code>&gt; wget -O reduced_GENCODE.vM21.annotation.gtf.gz https://zenodo.org/records/17176838/files/reduced_GENCODE.vM21.annotation.gtf.gz?download=1
 &gt; wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M21/gencode.vM21.transcripts.fa.gz
 &gt; wget -O mm10_polya.track.tar.gz https://zenodo.org/records/15664563/files/mm10_polya.track.tar.gz?download=1</code></pre>
 <p>Complete GTF genome annotation and FASTA transcripts annotation can be downloaded from <a href="https://www.gencodegenes.org">GENCODE</a> or <a href="https://www.ensembl.org/info/data/ftp/index.html">ENSEMBL</a>.</p>
