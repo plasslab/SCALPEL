@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Downstream analysis on scRNA-seq from human neuronal differentiation using SCALPEL</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="dropseq_downstream_files/libs/clipboard/clipboard.min.js"></script>
+<script src="dropseq_downstream_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="dropseq_downstream_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="dropseq_downstream_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="dropseq_downstream_files/libs/quarto-html/popper.min.js"></script>
+<script src="dropseq_downstream_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="dropseq_downstream_files/libs/quarto-html/anchor.min.js"></script>
+<link href="dropseq_downstream_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="dropseq_downstream_files/libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="dropseq_downstream_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="dropseq_downstream_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="dropseq_downstream_files/libs/bootstrap/bootstrap-a74871fe4945b66d259aafc266475145.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#downstream-analysis-of-scalpel-results" id="toc-downstream-analysis-of-scalpel-results" class="nav-link" data-scroll-target="#downstream-analysis-of-scalpel-results"><span class="header-section-number">2</span> Downstream analysis of SCALPEL results</a>
+  <ul>
+  <li><a href="#loading-isoform-based-seurat-object" id="toc-loading-isoform-based-seurat-object" class="nav-link" data-scroll-target="#loading-isoform-based-seurat-object"><span class="header-section-number">2.1</span> Loading isoform based Seurat object</a></li>
+  <li><a href="#quality-filtering-on-low-expressed-isoforms-features" id="toc-quality-filtering-on-low-expressed-isoforms-features" class="nav-link" data-scroll-target="#quality-filtering-on-low-expressed-isoforms-features"><span class="header-section-number">2.2</span> Quality filtering on low expressed isoforms features</a></li>
+  <li><a href="#dimensionality-reduction-and-clustering" id="toc-dimensionality-reduction-and-clustering" class="nav-link" data-scroll-target="#dimensionality-reduction-and-clustering"><span class="header-section-number">2.3</span> Dimensionality reduction and clustering</a></li>
+  <li><a href="#differential-isoform-expression-analysis" id="toc-differential-isoform-expression-analysis" class="nav-link" data-scroll-target="#differential-isoform-expression-analysis"><span class="header-section-number">2.4</span> Differential isoform expression analysis</a></li>
+  <li><a href="#visualization-of-isoform-expression-in-cells" id="toc-visualization-of-isoform-expression-in-cells" class="nav-link" data-scroll-target="#visualization-of-isoform-expression-in-cells"><span class="header-section-number">2.5</span> Visualization of isoform expression in cells</a>
+  <ul>
+  <li><a href="#umap" id="toc-umap" class="nav-link" data-scroll-target="#umap"><span class="header-section-number">2.5.1</span> UMAP</a></li>
+  <li><a href="#violin-plots" id="toc-violin-plots" class="nav-link" data-scroll-target="#violin-plots"><span class="header-section-number">2.5.2</span> Violin plots</a></li>
+  </ul></li>
+  <li><a href="#visualization-of-read-coverage-on-the-genome" id="toc-visualization-of-read-coverage-on-the-genome" class="nav-link" data-scroll-target="#visualization-of-read-coverage-on-the-genome"><span class="header-section-number">2.6</span> Visualization of read coverage on the genome</a></li>
+  <li><a href="#utr-length-analysis-in-single-cells" id="toc-utr-length-analysis-in-single-cells" class="nav-link" data-scroll-target="#utr-length-analysis-in-single-cells"><span class="header-section-number">2.7</span> 3’UTR length analysis in single-cells</a></li>
+  </ul></li>
+  <li><a href="#further-downstream-analysis" id="toc-further-downstream-analysis" class="nav-link" data-scroll-target="#further-downstream-analysis"><span class="header-section-number">3</span> Further downstream analysis</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Downstream analysis on scRNA-seq from human neuronal differentiation using SCALPEL</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Seurat)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Gviz)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggthemes)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rtracklayer)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">#load gene based analysis Seurat object</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>dge.obj <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="st">"./neuro_DGE.RDS"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Note</strong>: Install scalpelR for downstream analysis</p>
+</div>
+</div>
+<p>For execution of several function used in this downstream analysis with SCALPEL, we will implemented the R package scalpelR that can be installed from its <a href="https://github.com/Franzx7/scalpelR">Github page</a> as:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">"devtools"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"Franzx7/scalpelR"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scalpelR)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="introduction" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="introduction"><span class="header-section-number">1</span> Introduction</h2>
+<p>In this exemple, we did a gene and isoform based single-cell analysis from this Drop-seq single-cell dataset. Using Seurat, we first performed a standard single-cell gene-level analysis of the human neuronal differentiation dataset, which enabled the identification of distinct cell populations.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Visualize gene based sc cells</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">DimPlot</span>(dge.obj, <span class="at">label=</span>T, <span class="at">repel =</span> T, <span class="at">pt.size =</span> <span class="fl">1.</span>, <span class="at">label.size =</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span> <span class="fu">theme_umap</span>() <span class="sc">+</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtitle</span>(<span class="st">"iPS &amp; NPC cells clusters"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dropseq_downstream_files/figure-html/gene_analysis-1.png" class="img-fluid figure-img" width="576"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Prior to obtain this final clusters of population, we performed some quality filtering steps to obtain this set of reliable cells. Using those same cells barcode tags, we executed SCALPEL on this Drop-seq based single-cell dataset. All the information required to run SCALPEL can be found on its <a href="https://github.com/plasslab/SCALPEL">Github page</a>.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Note</strong>: SCALPEL requires the FASTQ, BAM and Gene count expression associated to each sample for its execution. For Drop-seq experiments, the BAM and Gene count expression can be obtained using the <a href="http://mccarrolllab.com/dropseq/">Drop-seq tools</a> and for 10x Genomics experiments, the BAM and Gene count expression can be obtained using the <a href="https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger">CellRanger</a> pipeline.</p>
+<p>SCALPEL execution can be performed on a specific cell population using the <strong><em>- -barcodes</em></strong> argument option.</p>
+</div>
+</div>
+<p>Following SCALPEL execution, a result folder is generated that contains all the information required to perform downstream analysis.</p>
+<div class="cell">
+<pre class="rmd cell-code"><code>&gt; tree -L 1 scalpel_output
+scalpel_output
+├── DIU_table.csv
+├── hiPSCs_APADGE.txt
+├── hiPSCs_filtered.bam
+├── hiPSCs_filtered.bam.bai
+├── hiPSCs_seurat.RDS
+├── iDGE_seurat.RDS
+├── NPCs_APADGE.txt
+├── NPCs_filtered.bam
+├── NPCs_filtered.bam.bai
+├── NPCs_seurat.RDS
+└── Runfiles
+
+2 directories, 10 files</code></pre>
+</div>
+</section>
+<section id="downstream-analysis-of-scalpel-results" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="downstream-analysis-of-scalpel-results"><span class="header-section-number">2</span> Downstream analysis of SCALPEL results</h2>
+<section id="loading-isoform-based-seurat-object" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="loading-isoform-based-seurat-object"><span class="header-section-number">2.1</span> Loading isoform based Seurat object</h3>
+<p>Let’s load the isoform-based Seurat object generated by SCALPEL using the reliable cell barcodes obtained from the gene-based analysis:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>idge.obj <span class="ot">=</span> <span class="fu">readRDS</span>(<span class="st">"./iDGE_seurat.RDS"</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>idge.obj</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>An object of class Seurat 
+68874 features across 2535 samples within 1 assay 
+Active assay: RNA (68874 features, 3837 variable features)
+ 3 layers present: data, counts, scale.data
+ 2 dimensional reductions calculated: pca, umap</code></pre>
+</div>
+</div>
+</section>
+<section id="quality-filtering-on-low-expressed-isoforms-features" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="quality-filtering-on-low-expressed-isoforms-features"><span class="header-section-number">2.2</span> Quality filtering on low expressed isoforms features</h3>
+<p>For this analysis, we already used a reliable set of cells obtained from the gene-based analysis. However, we can still perform some filtering steps to discard lowly expressed isoforms features that are not informative. For example, we can filter out isoforms that are detected in less than 3 cells:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter out isoforms that are detected in less than 3 cells</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>idge.obj <span class="ot">=</span> <span class="fu">subset</span>(idge.obj, <span class="at">features =</span> <span class="fu">rownames</span>(idge.obj)[Matrix<span class="sc">::</span><span class="fu">rowSums</span>(idge.obj<span class="sc">@</span>assays<span class="sc">$</span>RNA<span class="sc">@</span>counts <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">&gt;=</span> <span class="dv">3</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="dimensionality-reduction-and-clustering" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="dimensionality-reduction-and-clustering"><span class="header-section-number">2.3</span> Dimensionality reduction and clustering</h3>
+<p>Let’s perform the dimensionality reduction and clustering on this isoform-based Seurat object:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Standard workflow for dimensionality reduction and clustering (Adjust the parameters)</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>idge.obj <span class="ot">=</span> <span class="fu">NormalizeData</span>(idge.obj)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># as isoform data is more sparse and noisy, we recommend to use a higher number of variable features</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>idge.obj <span class="ot">=</span> <span class="fu">FindVariableFeatures</span>(idge.obj, <span class="at">nfeatures =</span> <span class="dv">4000</span>) </span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>idge.obj <span class="ot">=</span> <span class="fu">ScaleData</span>(idge.obj)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>idge.obj <span class="ot">=</span> <span class="fu">RunPCA</span>(idge.obj, <span class="at">npcs =</span> <span class="dv">50</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>idge.obj <span class="ot">=</span> <span class="fu">RunUMAP</span>(idge.obj, <span class="at">dims =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">#Clustering</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>idge.obj <span class="ot">=</span> <span class="fu">FindNeighbors</span>(idge.obj, <span class="at">dims =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>idge.obj <span class="ot">=</span> <span class="fu">FindClusters</span>(idge.obj, <span class="at">resolution =</span> <span class="fl">0.5</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>idge.obj<span class="sc">$</span>Clusters <span class="ot">=</span> idge.obj<span class="sc">$</span>seurat_clusters</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Now, we can visualize the clusters obtained from this isoform-based analysis. We can observe that while briging a new layer of information, the isoform quantification conserves the cell type specificity identified from the gene-based analysis</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter out isoforms that are detected in less than 3 cells</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">DimPlot</span>(idge.obj, <span class="at">group.by=</span><span class="st">"Clusters"</span>, <span class="at">label=</span>T, <span class="at">repel =</span> T, <span class="at">pt.size =</span> <span class="fl">1.</span>, <span class="at">label.size =</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span> <span class="fu">theme_umap</span>() <span class="sc">+</span> <span class="fu">ggtitle</span>(<span class="st">"iPS &amp; NPC cells clusters (isoform-based)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dropseq_downstream_files/figure-html/isoform_clusters-1.png" class="img-fluid figure-img" width="576"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="differential-isoform-expression-analysis" class="level3" data-number="2.4">
+<h3 data-number="2.4" class="anchored" data-anchor-id="differential-isoform-expression-analysis"><span class="header-section-number">2.4</span> Differential isoform expression analysis</h3>
+<p>We can perform a differential isoform expression analysis between the different clusters obtained from the isoform-based analysis. For example, let’s perform a differential isoform expression analysis between the iPSC and NP cell populations:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>diu.table <span class="ot">=</span> scalpelR<span class="sc">::</span><span class="fu">FindIsoforms</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">seurat_obj =</span> idge.obj,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_by =</span> <span class="st">"Clusters"</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">assay=</span><span class="st">"RNA"</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">threshold_pval =</span> <span class="fl">0.05</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(diu.table)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Aggregating counts in conditions… Performing filtering and comparison test… |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed=51s</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>                  gene_tr gene_name transcript_name   iPS    NP      p_value
+                   &lt;char&gt;    &lt;char&gt;          &lt;char&gt; &lt;num&gt; &lt;num&gt;        &lt;num&gt;
+   1:   ABCE1***ABCE1-201     ABCE1       ABCE1-201   355    93 0.0004997501
+   2:   ABCE1***ABCE1-202     ABCE1       ABCE1-202    97    90 0.0004997501
+   3:   ABCE1***ABCE1-203     ABCE1       ABCE1-203   267    88 0.0004997501
+   4:     ABI2***ABI2-201      ABI2        ABI2-201   154   209 0.0004997501
+   5:     ABI2***ABI2-208      ABI2        ABI2-208   232   104 0.0004997501
+  ---                                                                       
+3060:   VPS35***VPS35-209     VPS35       VPS35-209   189   127 0.0094952524
+3061: ZNF711***ZNF711-201    ZNF711      ZNF711-201    76   182 0.0094952524
+3062: ZNF711***ZNF711-203    ZNF711      ZNF711-203    67    92 0.0094952524
+3063: ZNF883***ZNF883-201    ZNF883      ZNF883-201    43     3 0.0094952524
+3064: ZNF883***ZNF883-207    ZNF883      ZNF883-207    28    11 0.0094952524
+      statistic p_value_adjusted
+          &lt;num&gt;            &lt;num&gt;
+   1: 51.570918      0.004381659
+   2: 51.570918      0.004381659
+   3: 51.570918      0.004381659
+   4: 50.017008      0.004381659
+   5: 50.017008      0.004381659
+  ---                           
+3060:  6.888679      0.049124915
+3061:  7.020585      0.049124915
+3062:  7.020585      0.049124915
+3063:  7.212890      0.049124915
+3064:  7.212890      0.049124915</code></pre>
+</div>
+</div>
+<p>We can visualize a particular gene expression, for example the gene <strong>EIF1</strong>, that have differentially expressed isoforms between the iPSC and NPC populations:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>gene.tab <span class="ot">=</span> diu.table <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">filter</span>(gene_name <span class="sc">==</span> <span class="st">"EIF1"</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(gene.tab)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           gene_tr gene_name transcript_name   iPS    NP      p_value statistic
+            &lt;char&gt;    &lt;char&gt;          &lt;char&gt; &lt;num&gt; &lt;num&gt;        &lt;num&gt;     &lt;num&gt;
+1: EIF1***EIF1-201      EIF1        EIF1-201  2517  1938 0.0004997501  386.0618
+2: EIF1***EIF1-204      EIF1        EIF1-204  5169  1799 0.0004997501  386.0618
+   p_value_adjusted
+              &lt;num&gt;
+1:      0.004381659
+2:      0.004381659</code></pre>
+</div>
+</div>
+</section>
+<section id="visualization-of-isoform-expression-in-cells" class="level3" data-number="2.5">
+<h3 data-number="2.5" class="anchored" data-anchor-id="visualization-of-isoform-expression-in-cells"><span class="header-section-number">2.5</span> Visualization of isoform expression in cells</h3>
+<section id="umap" class="level4" data-number="2.5.1">
+<h4 data-number="2.5.1" class="anchored" data-anchor-id="umap"><span class="header-section-number">2.5.1</span> UMAP</h4>
+<p>We can visualize the expression of these differentially expressed isoforms in the cells using a UMAP plot using Seurat. For example, let’s visualize the expression of the two differentially expressed isoforms of the gene <strong>EIF1</strong>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>Seurat<span class="sc">::</span><span class="fu">FeaturePlot</span>(idge.obj,</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">features =</span> gene.tab<span class="sc">$</span>gene_tr,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">pt.size =</span> <span class="dv">1</span>, </span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">label.size=</span><span class="dv">6</span>, </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">order=</span>T, </span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">label=</span>T, </span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">c</span>(<span class="st">"gray80"</span>, <span class="st">"red"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dropseq_downstream_files/figure-html/eif1_umap-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="violin-plots" class="level4" data-number="2.5.2">
+<h4 data-number="2.5.2" class="anchored" data-anchor-id="violin-plots"><span class="header-section-number">2.5.2</span> Violin plots</h4>
+<p>Aditionally, we can visualize the expression of these differentially expressed isoforms within the condition using violin plot as:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>p1 <span class="ot">=</span> scalpelR<span class="sc">::</span><span class="fu">plotExpression</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">seurat_obj =</span> idge.obj,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">features =</span> gene.tab<span class="sc">$</span>gene_tr,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_var =</span> <span class="st">"Clusters"</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot =</span> <span class="st">"group"</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">=</span> scalpelR<span class="sc">::</span><span class="fu">plotExpression</span>(</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">seurat_obj =</span> idge.obj,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">features =</span> gene.tab<span class="sc">$</span>gene_tr,</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">group_var =</span> <span class="st">"Clusters"</span>,</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot =</span> <span class="st">"features"</span>)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="fu">list</span>(p1, p2) <span class="sc">%&gt;%</span> patchwork<span class="sc">::</span><span class="fu">wrap_plots</span>(<span class="at">ncol=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stderr">
+<pre><code>Using features as id variables
+Using features as id variables</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dropseq_downstream_files/figure-html/eif1_vln2-1.png" class="img-fluid figure-img" width="576"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="visualization-of-read-coverage-on-the-genome" class="level3" data-number="2.6">
+<h3 data-number="2.6" class="anchored" data-anchor-id="visualization-of-read-coverage-on-the-genome"><span class="header-section-number">2.6</span> Visualization of read coverage on the genome</h3>
+<p>Furthermore, we can visualize the read coverage of these differentially expressed isoforms using the BAM files generated by SCALPEL. For example, let’s visualize the read coverage of the two differentially expressed isoforms of the gene <strong>EIF1</strong>.</p>
+<p>As we used a curated set of cell barcodes from the gene-based analysis to run SCALPEL, the BAM files generated by SCALPEL already contains only the reads from those reliable cells. Therefore, we can directly use these filtered BAM files to visualize the read coverage of the differentially expressed isoforms. However, if you want to visualize the read coverage of a specific cell population, you can filter the BAM files using the cell barcodes associated to that population and scalpelR subsetBAM as:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>ips_barcodes <span class="ot">=</span> dplyr<span class="sc">::</span><span class="fu">filter</span>(idge.obj[[]], Clusters<span class="sc">==</span><span class="st">"iPS"</span>) <span class="sc">%&gt;%</span> <span class="fu">rownames</span>()</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>np_barcodes <span class="ot">=</span> dplyr<span class="sc">::</span><span class="fu">filter</span>(idge.obj[[]], Clusters<span class="sc">==</span><span class="st">"NP"</span>) <span class="sc">%&gt;%</span> <span class="fu">rownames</span>()</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter BAM file to obtain reads from a specific cell population</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co">#IPS population</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>scalpelR<span class="sc">::</span><span class="fu">subsetBAM</span>(</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">bam_file =</span> <span class="st">"./scalpel_output/hiPSCs_filtered.bam"</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">barcodes =</span> ips_barcodes,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">output_file =</span> <span class="st">"./subset_ips_filtered.bam"</span>,</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">tag =</span> <span class="st">"XC"</span>,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">cores =</span> <span class="dv">4</span>)</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="co">#NP population</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>scalpelR<span class="sc">::</span><span class="fu">subsetBAM</span>(</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">bam_file =</span> <span class="st">"./scalpel_output/NPCs_filtered.bam"</span>,</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">barcodes =</span> ips_barcodes,</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">output_file =</span> <span class="st">"./subset_np_filtered.bam"</span>,</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">tag =</span> <span class="st">"XC"</span>,</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">cores =</span> <span class="dv">4</span>)</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="co">#Plot coverage using the subset BAM files and GTF annotation reference</span></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>gtrack <span class="ot">=</span> rtracklayer<span class="sc">::</span><span class="fu">import</span>(<span class="st">"./gencode.v41.annotation.gtf.gz"</span>)</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>scalpelR<span class="sc">::</span><span class="fu">CoveragePlot</span>(</span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">genome_gr =</span> gtrack,</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">bamfiles =</span> <span class="fu">c</span>(<span class="st">"IPS"</span><span class="ot">=</span><span class="st">"./subset_ips_filtered.bam"</span>,</span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"NP"</span><span class="ot">=</span><span class="st">"./subset_np_filtered.bam"</span>),</span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">gene_in =</span> <span class="st">"EIF1"</span>,</span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">genome_sp =</span> <span class="st">"hg38"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>$`BAM file:`
+                          IPS                            NP 
+"~/Projects/iPS_filtered.bam"  "~/Projects/NP_filtered.bam" 
+
+$`Gene:`
+[1] "EIF1"
+
+$`Transcripts:`
+NULL
+
+$`Genome annotation org:`
+[1] "hg38"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Building Gene Track...</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Building Alignment Track...</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dropseq_downstream_files/figure-html/plot_coverage2-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>By default, the CoveragePlot function will plot all the isoforms of the gene of interest. However, you can also specify a set of isoforms to plot using the <strong>features</strong> argument option. Furthermore, you can also specify the distance to zoom from the 3’UTR using the <strong>distZOOM</strong> argument option as:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>scalpelR<span class="sc">::</span><span class="fu">CoveragePlot</span>(</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">genome_gr =</span> gtrack,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">bamfiles =</span> <span class="fu">c</span>(<span class="st">"IPS"</span><span class="ot">=</span><span class="st">"~/Projects/iPS_filtered.bam"</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"NP"</span><span class="ot">=</span><span class="st">"~/Projects/NP_filtered.bam"</span>),</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">features =</span> gene.tab<span class="sc">$</span>transcript_name,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">gene_in =</span> <span class="st">"EIF1"</span>,</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">genome_sp =</span> <span class="st">"hg38"</span>,</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">distZOOM =</span> <span class="dv">2000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$`BAM file:`
+                          IPS                            NP 
+"~/Projects/iPS_filtered.bam"  "~/Projects/NP_filtered.bam" 
+
+$`Gene:`
+[1] "EIF1"
+
+$`Transcripts:`
+[1] "EIF1-201" "EIF1-204"
+
+$`Genome annotation org:`
+[1] "hg38"</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Building Gene Track...</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Building Alignment Track...</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dropseq_downstream_files/figure-html/dist_zoom-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="utr-length-analysis-in-single-cells" class="level3" data-number="2.7">
+<h3 data-number="2.7" class="anchored" data-anchor-id="utr-length-analysis-in-single-cells"><span class="header-section-number">2.7</span> 3’UTR length analysis in single-cells</h3>
+<p>Using the isoform quantification obtained from SCALPEL, and the genome annotation reference, we can estimate the 3’UTR length of each isoform in each cell. For this, we can use the function <strong>scalpelR::weightedUTR_cell</strong> as:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>utr3length_tab <span class="ot">=</span> scalpelR<span class="sc">::</span><span class="fu">weightedUTR_cell</span>(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">seurat_obj =</span> idge.obj,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">annotation_gr =</span> gtrack,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">group.by =</span> <span class="st">"Clusters"</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">assay =</span> <span class="st">"RNA"</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Processing annotation file...(1/3)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Processing isoform expression...(2/3)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Integrating Seurat metadata...(3/3)</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(utr3length_tab)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               cells  group wUTRlength.cell
+              &lt;char&gt; &lt;char&gt;           &lt;num&gt;
+   1: AAAAAAGAACCC-1    iPS        426.7257
+   2: AAAAAAGAACTG-1    iPS        309.9807
+   3: AAAAAATGTAAC-1    iPS        284.2699
+   4: AAAAGAATCGGC-1    iPS        206.4187
+   5: AAAAGTCAACTA-1    iPS        459.1815
+  ---                                      
+2531: TTTTCAGAGTTT-2     NP        549.5643
+2532: TTTTCGCAATTC-2     NP        565.8120
+2533: TTTTGGCTCAGT-2     NP        241.0014
+2534: TTTTGTCACCTT-2     NP        407.8529
+2535: TTTTTCCGTACG-2     NP        301.0732</code></pre>
+</div>
+</div>
+<p>Then, based on this metric, we can visualize the 3’UTR length distribution in the different cell populations using plots as:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>utr3length_tab <span class="sc">%&gt;%</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span>group, <span class="at">y=</span>wUTRlength.cell, <span class="at">fill=</span>group)) <span class="sc">+</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_jitter</span>(<span class="at">na.rm=</span>T, <span class="at">size=</span>.<span class="dv">5</span>) <span class="sc">+</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_violin</span>(<span class="at">scale=</span><span class="st">"width"</span>, <span class="at">trim=</span>T, <span class="at">na.rm =</span> T, <span class="at">alpha=</span>.<span class="dv">6</span>) <span class="sc">+</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">geom_boxplot</span>(<span class="at">fill=</span><span class="st">"white"</span>, <span class="at">width=</span>.<span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ylim</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1000</span>)) <span class="sc">+</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">ggtitle</span>(<span class="st">"average 3'UTR length distribution per cell"</span>) <span class="sc">+</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">title =</span> <span class="fu">element_text</span>(<span class="at">size=</span><span class="dv">9</span>)) <span class="sc">+</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    ggplot2<span class="sc">::</span><span class="fu">theme_bw</span>(<span class="at">base_size =</span> <span class="dv">9</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dropseq_downstream_files/figure-html/3utr_plots-1.png" class="img-fluid figure-img" width="384"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="further-downstream-analysis" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="further-downstream-analysis"><span class="header-section-number">3</span> Further downstream analysis</h2>
+<p>Using the R Seurat Object generated by SCALPEL, you can perform further downstream analysis in the same way as a standard gene-based Seurat object. For example, you can perform trajectory analysis using Monocle3, etc…<br>
+For more information, please refer to the Seurat documentation <a href="https://satijalab.org/seurat/">here</a>.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
