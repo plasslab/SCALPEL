@@ -218,7 +218,7 @@ scalpel_output
 
 ## Downstream analysis
 
-For more information, refer to [SCALPEL_downstream_analysis](https://github.com/p-CMRC-LAB/SCALPEL/wiki) for downstream analysis of the SCALPEL output files.
+For more information, refer to [SCALPEL_downstream_analysis](https://raw.githack.com/plasslab/SCALPEL/refs/heads/dev/docs/dropseq_downstream.html) for downstream analysis of the SCALPEL output files.
 
 
 email: <a href="mailto:aerod7710@gmail.com"> fake@idibell.cat </a>
