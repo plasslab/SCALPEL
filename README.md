@@ -116,6 +116,7 @@ For downstream analysis tutorials, visit:
 - [Example of SCALPEL application on 10X scRNA-seq](https://raw.githack.com/plasslab/SCALPEL/refs/heads/dev/docs/chromium.html)
 - [Example of SCALPEL application on DropSeq scRNA-seq](https://raw.githack.com/plasslab/SCALPEL/refs/heads/dev/docs/dropseq.html)
 - [Drop-seq downstream analysis Wiki](https://raw.githack.com/plasslab/SCALPEL/refs/heads/dev/docs/dropseq_downstream.html)
+- [10X Chromium downstream analysis Wiki](https://raw.githack.com/plasslab/SCALPEL/refs/heads/dev/docs/chromium_downstream.html)
 
 ---
 
