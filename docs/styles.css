@@ -1,12 +1,6 @@
-pre code {
+pre, pre code {
   color: black;
   background-color: #dbcdab;
-  font-size: 9pt;
-}
-
-code {
-  color: black;
-  background-color: transparent;
   font-size: 9pt;
 }
 
