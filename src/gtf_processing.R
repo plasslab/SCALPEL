@@ -172,8 +172,8 @@ if(nrow(qf)==0){
 
 
   #. Format collapsed table
-  gtf = left_join(gtf, collapseds.tab %>% mutate(transcript_name=collapsed) %>% tidyr::separate_longer_delim(collapsed, delim="_") %>% distinct()) %>%
-    mutate(collapsed = ifelse(is.na(collapsed),"none",collapsed))
+  gtf = left_join(gtf, collapseds.tab %>% mutate(collapseds=collapsed) %>% tidyr::separate_longer_delim(collapsed, delim="_") %>% dplyr::rename(transcript_name=collapsed, collapsed=collapseds) %>% distinct()) %>%
+    dplyr::mutate(collapsed = ifelse(is.na(collapsed),"none",collapsed))
 
   #writing
   distinct(gtf, gene_name, collapsed) %>% 
