@@ -16,7 +16,7 @@ process salmon_transcriptome_indexing {
         path "transcriptome_index"
     script:
         """
-        salmon index -t ${transcriptome_reference} -i transcriptome_index --gencode -p 4
+        salmon index -t ${transcriptome_reference} -i transcriptome_index --gencode -p ${task.cpus}
         """
 }
 
@@ -34,7 +34,7 @@ process salmon_bulk_quantification{
         path "${pair_id}.sf"
     script:
         """
-        salmon quant -i ${transcriptome_index} -l ISR -1 ${fastq1} -2 ${fastq2} -o ${pair_id} --minScoreFraction 0.7 --vbPrior 5 --perNucleotidePrior -p 4
+        salmon quant -i ${transcriptome_index} -l ISR -1 ${fastq1} -2 ${fastq2} -o ${pair_id} --minScoreFraction 0.7 --vbPrior 5 --perNucleotidePrior -p ${task.cpus}
         mv ${pair_id}/quant.sf ${pair_id}.sf
         """
 }

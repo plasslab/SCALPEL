@@ -119,16 +119,26 @@ process bam_splitting {
                 rm -f ${chr}.bam
             fi
             """
-    else
+    else {
+        if (!(params.dedup_mode in ["upstream", "compound_cb_ub"]))
+            error "Invalid or missing dedup_mode: ${params.dedup_mode}; use upstream or compound_cb_ub"
+        def dedup = params.dedup_mode == "upstream" ? """
+        samtools markdup -@ ${task.cpus} tmp.bam ${chr}.bam -r --barcode-tag CB --barcode-tag UB
+        rm tmp.bam
+        """ : """
+        samtools view -h -@ ${task.cpus} tmp.bam | python ${baseDir}/src/combined_cell_umi_tag.py | samtools view -b -@ ${task.cpus} -o tagged.bam
+        samtools markdup -@ ${task.cpus} tagged.bam dedup.bam -r --barcode-tag XU
+        samtools view -b -@ ${task.cpus} -x XU dedup.bam > ${chr}.bam
+        rm tmp.bam tagged.bam dedup.bam
+        """
         """
         #Chromium_seq
         #index input bam file
-        samtools index ${bam} -@ 4 -o ./${bam.baseName}.bai
+        samtools index ${bam} -@ ${task.cpus} -o ./${bam.baseName}.bai
         #Filter reads , Remove duplicates and split by chromosome
-        samtools view --subsample ${params.subsample} -b ${bam} -X ${bam.baseName}.bai ${chr} -D CB:${bc_path} --keep-tag "CB,UB" | samtools sort > tmp.bam
+        samtools view --subsample ${params.subsample} -b ${bam} -X ${bam.baseName}.bai ${chr} -D CB:${bc_path} --keep-tag "CB,UB" | samtools sort -@ ${task.cpus} > tmp.bam
         #Remove all PCR duplicates ...
-        samtools markdup tmp.bam ${chr}.bam -r --barcode-tag CB --barcode-tag UB
-        rm tmp.bam
+        ${dedup}
         #check if empty bam file... if yes discard from the analysis
         samtools view ${chr}.bam | head -1 > check
         if [ -s check ]; then
@@ -138,6 +148,7 @@ process bam_splitting {
             rm -f ${chr}.bam
         fi
         """
+    }
 }
 
 process bedfile_conversion{
