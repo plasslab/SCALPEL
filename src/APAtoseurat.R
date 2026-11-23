@@ -1,24 +1,15 @@
-
-
+# env: env/pi/SCALPEL
 library(argparse)
-library(data.table)
-library(dplyr)
+library(Matrix)
 library(Seurat)
-
-
-#ArgumentParser
-#==============
-parser = ArgumentParser(description='Process counts file')
-parser$add_argument('APA_PATH', type="character", help='path of APA counts file')
-parser$add_argument('sample_name', type="character", help='sample_name')
-parser$add_argument('OUTPUT', type="character", help='path of output seurat file')
-args = parser$parse_args()
-
-MIN.CELLS=0
-MIN.FEATURES=0
-
-#file opening and writing
-tab = read.table(args$APA_PATH, sep="\t", header = T, row.names = 1)
-myobj = Seurat::CreateSeuratObject(tab, names.field = 1, min.cells = MIN.CELLS, min.features = MIN.FEATURES, project = args$sample_name)
-saveRDS(myobj, file=paste0(args$sample_name,"_seurat.RDS"))
-
+parser <- ArgumentParser(description='Process counts file')
+parser$add_argument('APA_PATH')
+parser$add_argument('sample_name')
+parser$add_argument('OUTPUT')
+args <- parser$parse_args()
+stem <- sub('\\.txt$', '', args$APA_PATH)
+counts <- as(as(readMM(args$APA_PATH), 'generalMatrix'), 'CsparseMatrix')
+rownames(counts) <- readLines(paste0(stem, '_features.txt'))
+colnames(counts) <- make.names(readLines(paste0(stem, '_barcodes.txt')), unique=TRUE)
+myobj <- Seurat::CreateSeuratObject(counts, names.field=1, min.cells=0, min.features=0, project=args$sample_name)
+saveRDS(myobj, file=paste0(args$sample_name, '_seurat.RDS'))

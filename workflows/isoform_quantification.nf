@@ -112,10 +112,11 @@ process dge_generation{
 	tuple val(sample_id), path(isoforms), path(raw_dge)
 
 	output:
-	tuple val(sample_id), path("${sample_id}_APADGE.txt"), path("${sample_id}_seurat.RDS")
+	tuple val(sample_id), path("${sample_id}_APADGE.txt"), path("${sample_id}_seurat.RDS"), path("${sample_id}_APADGE_features.txt"), path("${sample_id}_APADGE_barcodes.txt")
 	
 	script:
 	"""
+	# apa-agent patch: sparse DGE (no pivot_wider)
 	#Merge ALL cells prediction with DGE table
 	Rscript ${baseDir}/src/merge_DGE_PRED.R ${raw_dge} ${isoforms} ${sample_id}_APADGE.txt
 
